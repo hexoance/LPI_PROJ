@@ -1,6 +1,9 @@
 # IDE
 .idea/
 
+#Folder containing data to models
+data/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
