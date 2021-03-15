@@ -7,9 +7,9 @@ import multiprocessing
 import numpy as np
 import sounddevice as sd
 
-from src.audio import AudioInference
-from src.video import VideoInference
-from src.utils.app_utils import FPS, WebcamVideoStream
+from audio import AudioInference
+from video import VideoInference
+from utils.app_utils import FPS, WebcamVideoStream
 from multiprocessing import Queue, Pool
 
 from openhab import OpenHAB

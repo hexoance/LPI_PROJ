@@ -49,8 +49,8 @@ Se continuar, aumentar o grau do alerta.
 ## **11/03/2021**
 
 #### Discussão de diagramas de workflow do projeto:
-![LPI](data/logbook_imgs/LPI.jpeg)
+![LPI](assets/logbook_imgs/LPI.jpeg)
 
-![LPI_EdgeDevice](data/logbook_imgs/LPI_(EdgeDevice).jpeg)
+![LPI_EdgeDevice](assets/logbook_imgs/LPI_(EdgeDevice).jpeg)
 
 - Limitar as classes para apenas os casos de uso a desenvolver.

@@ -2,12 +2,12 @@ import numpy as np
 import tensorflow as tf
 import cv2
 import os
-from src.utils import visualization_utils as vis_util
+from utils import visualization_utils as vis_util
 
 CWD_PATH = os.getcwd()
 
 # Path to frozen detection graph. This is the actual model that is used for the classification.
-PATH_TO_CKPT = os.path.join(CWD_PATH, '../models/frozen_model.pb')
+PATH_TO_CKPT = os.path.join(CWD_PATH, '../models/charades/frozen_model.pb')
 PREDICTION_DECAY = 0.6  # [0,1) How slowly to update the predictions (0.99 is slowest, 0 is instant)
 
 class VideoInference:
@@ -41,7 +41,7 @@ class VideoInference:
     def loadlabels(self, file):
         # List of the strings that is used to add correct label for each box.
         labels = {}
-        with open('../data/' + file) as f:
+        with open('../models/charades/' + file) as f:
             for line in f:
                 x = line.split(' ')
                 cls, rest = x[0], ' '.join(x[1:]).strip()
@@ -50,7 +50,7 @@ class VideoInference:
         return labels
 
     def mapclasses(self, classes, objects, verbs):
-        with open('../data/Charades_v1_mapping.txt') as f:
+        with open('../models/charades/Charades_v1_mapping.txt') as f:
             for line in f:
                 x = line.split(' ')
                 cls = x[0]
