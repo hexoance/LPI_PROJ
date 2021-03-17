@@ -11,7 +11,7 @@ recording = np.zeros((0, 1))  # initialize recording shape
 
 class AudioInference:
 
-    def __init__(self, item_label):
+    def __init__(self, output_q, item_label):
         self.item_label = item_label
         # Load Models
         self.model_audio = tf.saved_model.load('../models/yamnet_1')

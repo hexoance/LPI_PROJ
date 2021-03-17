@@ -9,7 +9,7 @@ import sounddevice as sd
 
 from audio import AudioInference
 from video import VideoInference
-from utils.app_utils import FPS, WebcamVideoStream
+from utils.app_utils import WebcamVideoStream
 from multiprocessing import Queue, Pool
 
 from openhab import OpenHAB
@@ -28,19 +28,15 @@ recording = np.zeros((0, 1))  # initialize recording shape
 
 def worker(input_q, output_q):
 
-    fps = FPS().start()
-
-    audio = AudioInference(item_label_audio)
+    audio = AudioInference(output_q, item_label_audio)
     video = VideoInference(output_q, item_label)
     while True:
-        fps.update()
         item = input_q.get()
         if (item['type'] == 'audio'):
             audio.inference(item['data'])
         elif (item['type'] == 'video'):
             video.inference(item['data'])
 
-    fps.stop()
     sess.close()
 
 
@@ -79,9 +75,8 @@ if __name__ == '__main__':
     video_capture = WebcamVideoStream(src=args.video_source,
                                       width=args.width,
                                       height=args.height).start()
-    fps = FPS().start()
-    with sd.InputStream(samplerate=fs, channels=1, callback=callback):
 
+    with sd.InputStream(samplerate=fs, channels=1, callback=callback):
         while True:  # fps._numFrames < 120
             frame = video_capture.read()
             item = {'type': 'video', 'data': frame}
@@ -91,17 +86,15 @@ if __name__ == '__main__':
 
             output_rgb = cv2.cvtColor(output_q.get(), cv2.COLOR_RGB2BGR)
             cv2.imshow('Video', output_rgb)
-            fps.update()
 
             print('[INFO] elapsed time: {:.2f}'.format(time.time() - t))
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
-    fps.stop()
-    print('[INFO] elapsed time (total): {:.2f}'.format(fps.elapsed()))
-    print('[INFO] approx. FPS: {:.2f}'.format(fps.fps()))
-
     pool.terminate()
     video_capture.stop()
     cv2.destroyAllWindows()
+
+    print('[INFO] elapsed time (total): {:.2f}'.format(video_capture.elapsed()))
+    print('[INFO] approx. FPS: {:.2f}'.format(video_capture.fps()))
