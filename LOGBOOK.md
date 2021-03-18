@@ -54,3 +54,11 @@ Se continuar, aumentar o grau do alerta.
 ![LPI_EdgeDevice](assets/logbook_imgs/LPI_(EdgeDevice).jpeg)
 
 - Limitar as classes para apenas os casos de uso a desenvolver.
+
+## **18/03/2021**
+
+- Testar com ficheiros audio gravados e testar.
+- Usar code ufp pt para partilhar codigo com os orientadores do projeto.
+- Tratamento/processamento de dados é necessário (Fazer step-by-step através da gravação para ficheiro).
+- Usar a biblioteca mais tarde PyAudio para detetar diretamente no microfone o audio.
+- Testar conjuntos para teste e conjuntos para treino.
