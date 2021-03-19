@@ -64,7 +64,7 @@ yamnet_model = hub.load(yamnet_model_handle)
 
 testing_wav_file_name = tf.keras.utils.get_file('miaow_16k.wav',
                                                 'https://storage.googleapis.com/audioset/miaow_16k.wav',
-                                                cache_dir='../retrain/',
+                                                cache_dir='./',
                                                 cache_subdir='test_data')
 
 print(testing_wav_file_name)
@@ -133,22 +133,29 @@ The data consists of 50 classes, with 40 examples per class.
 Next, you will download and extract it.
 """
 
+"""
 _ = tf.keras.utils.get_file('esc-50.zip',
                             'https://github.com/karoldvl/ESC-50/archive/master.zip',
-                            cache_dir='../retrain/',
+                            cache_dir='./',
                             cache_subdir='datasets',
                             extract=True)
+"""
 
 """### Explore the data
-The metadata for each file is specified in the csv file at `./datasets/ESC-50-master/meta/esc50.csv` and 
+The metadata for each file is specified in the csv file at `./datasets/ESC-50-master/meta/data_mapping.csv` and 
 all the audio files are in `./datasets/ESC-50-master/audio/`
 You will create a pandas dataframe with the mapping and use that to have a clearer view of the data.
 """
 
-esc50_csv = './datasets/ESC-50-master/meta/esc50.csv'
-base_data_path = '../retrain/datasets/ESC-50-master/audio/'
+datasets = ['ESC-50-master', 'FSD50k']
+dataset_name = datasets[1]
+fold_val = 2
+fold_eval = 3
 
-pd_data = pd.read_csv(esc50_csv)
+files_csv = './datasets/' + dataset_name + '/data_mapping.csv'
+base_data_path = './datasets/' + dataset_name + '/audio/'
+
+pd_data = pd.read_csv(files_csv)
 pd_data.head()
 
 """### Filter the data
@@ -158,7 +165,7 @@ Given the data on the dataframe, you will apply some transformations:
 - change targets to be within a specific range. In this example, dog will remain 0, but cat will become 1 instead of its original value of 5.
 """
 
-my_classes = ['door_wood_knock', 'mouse_click', 'keyboard_typing']
+my_classes = ['Computer_keyboard', 'Knock', 'Scissors']
 map_class_to_id = {}
 
 for i in range(len(my_classes)):
@@ -218,9 +225,9 @@ The last step is to remove the `fold` column from the dataset since we're not go
 """
 
 cached_ds = main_ds.cache()
-train_ds = cached_ds.filter(lambda embedding, label, fold: fold < 4)
-val_ds = cached_ds.filter(lambda embedding, label, fold: fold == 4)
-test_ds = cached_ds.filter(lambda embedding, label, fold: fold == 5)
+train_ds = cached_ds.filter(lambda embedding, label, fold: fold < fold_val)
+val_ds = cached_ds.filter(lambda embedding, label, fold: fold == fold_val)
+test_ds = cached_ds.filter(lambda embedding, label, fold: fold == fold_eval)
 
 # remove the folds column now that it's not needed anymore
 remove_fold_column = lambda embedding, label, fold: (embedding, label)
@@ -295,7 +302,7 @@ class ReduceMeanLayer(tf.keras.layers.Layer):
         return tf.math.reduce_mean(input, axis=self.axis)
 
 
-saved_model_path = '../retrain/new_yamnet'
+saved_model_path = '../models/new_yamnet'
 
 input_segment = tf.keras.layers.Input(shape=(), dtype=tf.float32, name='audio')
 embedding_extraction_layer = hub.KerasLayer(yamnet_model_handle, trainable=False, name='yamnet')
@@ -327,7 +334,7 @@ print(f'The main sound is: {detected_sound}')
 The model is ready. Let's compare it to YAMNet on the test dataset.
 """
 
-test_pd = filtered_pd.loc[filtered_pd['fold'] == 5]
+test_pd = filtered_pd.loc[filtered_pd['fold'] == 3]
 row = test_pd.sample(1)
 filename = row['filename'].item()
 print(filename)
