@@ -152,8 +152,11 @@ dataset_name = datasets[1]
 fold_val = 2
 fold_eval = 3
 
-files_csv = './datasets/' + dataset_name + '/data_mapping.csv'
-base_data_path = './datasets/' + dataset_name + '/audio/'
+DATASETS_PATH = './datasets/'
+#DATASETS_PATH ='D:/datasets/'
+
+files_csv = DATASETS_PATH + dataset_name + '/data_mapping.csv'
+base_data_path = DATASETS_PATH + dataset_name + '/audio/'
 
 pd_data = pd.read_csv(files_csv)
 pd_data.head()
