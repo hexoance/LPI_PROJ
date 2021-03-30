@@ -10,10 +10,10 @@ CWD_PATH = os.getcwd()
 PATH_TO_CKPT = os.path.join(CWD_PATH, '../models/charades/frozen_model.pb')
 PREDICTION_DECAY = 0.6  # [0,1) How slowly to update the predictions (0.99 is slowest, 0 is instant)
 
+
 class VideoInference:
 
-    def __init__(self, output_q, item_label):
-        self.item_label = item_label
+    def __init__(self, output_q):
         self.output_q = output_q
         self.accumulator = np.zeros(157, )
 
@@ -36,7 +36,8 @@ class VideoInference:
 
     def inference(self, frame):
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        self.output_q.put(self.recognize_activity(frame_rgb, self.sess, self.detection_graph, self.accumulator))
+        prediction = self.recognize_activity(frame_rgb, self.sess, self.detection_graph, self.accumulator)
+        return prediction
 
     def loadlabels(self, file):
         # List of the strings that is used to add correct label for each box.
@@ -91,7 +92,6 @@ class VideoInference:
         boxes = np.array([[0.1, 0, 0.1, 0], [0.2, 0, 0.2, 0], [0.3, 0, 0.3, 0]])
 
         print('[VIDEO]:', self.category_classes[classes[0]])
-        self.item_label.state = str(self.category_classes[classes[0]]['name'])
 
         vis_util.visualize_boxes_and_labels_on_image_array(
             image_np,
@@ -104,4 +104,6 @@ class VideoInference:
             min_score_thresh=0,
             display_score=False)
 
-        return image_np
+        self.output_q.put(image_np)
+
+        return str(self.category_classes[classes[0]]['name'])

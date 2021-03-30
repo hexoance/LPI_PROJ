@@ -17,22 +17,36 @@ item_label = openhab.get_item('Input')
 item_label_audio = openhab.get_item('Input2')
 
 
-def inference_worker(in_q):
-
-    audio = AudioInference(output_q, item_label_audio)
-    video = VideoInference(output_q, item_label)
-    inference = {'audio': audio.inference, 'video': video.inference}
-
-    while True:
-        item = in_q.get()
-        inference[item['type']](item['data'])
-
-
 def data_processing_worker(in_q, out_q):
 
     while True:
         item = in_q.get()
         out_q.put(item)
+
+
+def inference_worker(in_q, out_q):
+    audio = AudioInference()
+    video = VideoInference(output_q)
+    inference = {'audio': audio.inference, 'video': video.inference}
+
+    while True:
+        item = in_q.get()
+        prediction = inference[item['type']](item['data'])
+        out_q.put({'prediction': prediction, 'type': item['type']})
+
+
+def network_worker(in_q):
+
+    while True:
+        item = in_q.get()
+        label = None
+        if item['type'] == 'video':
+            label = item_label
+        elif item['type'] == 'audio':
+            label = item_label_audio
+
+        if label is not None:
+            label.state = item['prediction']
 
 
 if __name__ == '__main__':
@@ -57,8 +71,9 @@ if __name__ == '__main__':
     data_processed_q = Queue(maxsize=args.queue_size)
     prediction_q = Queue(maxsize=args.queue_size)
 
-    pool = Pool(args.num_workers, inference_worker, (data_processed_q,))
-    processing_pool = Pool(args.num_workers, data_processing_worker, (data_captured_q, data_processed_q))
+    processing_pool = Pool(2, data_processing_worker, (data_captured_q, data_processed_q))
+    inference_pool = Pool(args.num_workers, inference_worker, (data_processed_q, prediction_q))
+    network_pool = Pool(2, network_worker, (prediction_q,))
 
     video_capture = WebcamVideoStream(src=args.video_source,
                                       width=args.width,
@@ -74,8 +89,9 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         pass
 
-    pool.terminate()
     processing_pool.terminate()
+    inference_pool.terminate()
+    network_pool.terminate()
     audio_capture.stop()
     video_capture.stop()
     cv2.destroyAllWindows()

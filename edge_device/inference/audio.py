@@ -11,8 +11,7 @@ recording = np.zeros((0, 1))  # initialize recording shape
 
 class AudioInference:
 
-    def __init__(self, output_q, item_label):
-        self.item_label = item_label
+    def __init__(self):
         # Load Models
         self.model_audio = tf.saved_model.load('../models/yamnet_1')
 
@@ -38,6 +37,10 @@ class AudioInference:
         print('[AUDIO] Scores:\n' + '\n'.join(
             '  {:12s}: {:.3f}'.format(self.class_names[i], prediction[i]) for i in top5))
 
-        self.item_label.state = self.class_names[top5[0]]
+        #self.item_label.state = self.class_names[top5[0]]
+        prediction = self.class_names[top5[0]]
+
         # plot_results(waveform, scores, log_mel_spectrogram)
         # print(class_names[scores.numpy().mean(axis=0).argmax()])  # Prints top score.
+
+        return prediction
