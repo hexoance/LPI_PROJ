@@ -62,3 +62,11 @@ Se continuar, aumentar o grau do alerta.
 - Tratamento/processamento de dados é necessário (Fazer step-by-step através da gravação para ficheiro).
 - Usar a biblioteca mais tarde PyAudio para detetar diretamente no microfone o audio.
 - Testar conjuntos para teste e conjuntos para treino.
+
+## **25/03/2021**
+
+- Balancear os ficheiros de audio na leitura (mesmo número de ficheiros para cada classe)
+- [LSTE](https://learnopencv.com/introduction-to-video-classification-and-human-activity-recognition/#heading3)
+
+- Em relação ao video:
+  - Usar Video para identificar: a pessoa "interessante" (ex. usar o rosto), a localização na casa (ex. quarto, cozinha, etc), a ação dessa pessoa (ex. sentada, cozinhar)
