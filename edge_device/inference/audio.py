@@ -37,7 +37,6 @@ class AudioInference:
         print('[AUDIO] Scores:\n' + '\n'.join(
             '  {:12s}: {:.3f}'.format(self.class_names[i], prediction[i]) for i in top5))
 
-        #self.item_label.state = self.class_names[top5[0]]
         prediction = self.class_names[top5[0]]
 
         # plot_results(waveform, scores, log_mel_spectrogram)

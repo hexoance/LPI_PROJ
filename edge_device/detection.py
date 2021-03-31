@@ -1,6 +1,6 @@
-import cv2
 import argparse
 import multiprocessing
+import datetime
 
 from inference.audio import AudioInference
 from inference.video import VideoInference
@@ -83,18 +83,23 @@ if __name__ == '__main__':
 
     audio_capture = MicrophoneAudioStream(src=0, in_q=data_captured_q).start()
 
+    # start the timer
+    start = datetime.datetime.now()
+
     try:
         while True:
             pass
     except KeyboardInterrupt:
         pass
 
-    processing_pool.terminate()
-    inference_pool.terminate()
+    # stop the timer
+    end = datetime.datetime.now()
+
     network_pool.terminate()
+    inference_pool.terminate()
+    processing_pool.terminate()
+
     audio_capture.stop()
     video_capture.stop()
-    cv2.destroyAllWindows()
 
-    print('[INFO] elapsed time (total): {:.2f}'.format(video_capture.elapsed()))
-    print('[INFO] approx. FPS: {:.2f}'.format(video_capture.fps()))
+    print('[INFO] elapsed time (seconds): {:.2f}'.format((end - start).total_seconds()))
