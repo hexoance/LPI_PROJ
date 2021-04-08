@@ -62,12 +62,6 @@ yamnet_model = hub.load(yamnet_model_handle)
 """With the model loaded and following the [models's basic usage tutorial](https://www.tensorflow.org/hub/tutorials/yamnet) you'll download a sample wav file and run the inference.
 """
 
-testing_wav_file_name = tf.keras.utils.get_file('miaow_16k.wav',
-                                                'https://storage.googleapis.com/audioset/miaow_16k.wav',
-                                                cache_dir='./',
-                                                cache_subdir='test_data')
-
-print(testing_wav_file_name)
 
 """You will need a function to load the audio files. They will also be used later when working with the training data.
 Note: The returned `wav_data` from `load_wav_16k_mono` is already normalized to values in `[-1.0, 1.0]` (as stated in the model's [documentation](https://tfhub.dev/google/yamnet/1)).
@@ -87,12 +81,8 @@ def load_wav_16k_mono(filename):
     return wav
 
 
-testing_wav_data = load_wav_16k_mono(testing_wav_file_name)
 
-_ = plt.plot(testing_wav_data)
 
-# Play the audio file.
-display.Audio(testing_wav_data, rate=16000)
 
 """### Load the class mapping
 It's important to load the class names that YAMNet is able to recognize.
@@ -113,13 +103,6 @@ across frames (e.g., using mean or max aggregation). This is done below by `scor
 Finally, in order to find the top-scored class at the clip-level, we take the maximum of the 521 aggregated scores.
 """
 
-scores, embeddings, spectrogram = yamnet_model(testing_wav_data)
-class_scores = tf.reduce_mean(scores, axis=0)
-top_class = tf.argmax(class_scores)
-infered_class = class_names[top_class]
-
-print(f'The main sound is: {infered_class}')
-print(f'The embeddings shape: {embeddings.shape}')
 
 """Note: The model correctly inferred an animal sound. Your goal is to increase accuracy for specific classes. Also, notice that the the model generated 13 embeddings, 1 per frame.
 
@@ -152,8 +135,8 @@ DATASET_NAME = datasets[1]
 fold_val = 2
 fold_eval = 3
 
-#DATASETS_PATH = './datasets/'
-DATASETS_PATH ='D:/datasets/'
+DATASETS_PATH = './datasets/'
+# DATASETS_PATH ='D:/datasets/'
 
 files_csv = DATASETS_PATH + DATASET_NAME + '/data_mapping.csv'
 base_data_path = DATASETS_PATH + DATASET_NAME + '/audio/'
@@ -179,7 +162,7 @@ def readClasses(file):
         for row in iterreader:
             my_classes.append(row[0])
 
-        #print(my_classes)
+        # print(my_classes)
 
 
 readClasses('classes.csv')
@@ -293,11 +276,8 @@ print("Accuracy: ", accuracy)
 Next, try your model on the embedding from the previous test using YAMNet only.
 """
 
-scores, embeddings, spectrogram = yamnet_model(testing_wav_data)
-result = my_model(embeddings).numpy()
 
-infered_class = my_classes[result.mean(axis=0).argmax()]
-print(f'The main sound is: {infered_class}')
+
 
 """## Save a model that can directly take a wav file as input
 Your model works when you give it the embeddings as input.
@@ -338,15 +318,9 @@ reloaded_model = tf.saved_model.load(saved_model_path)
 
 """And for the final test: given some sound data, does your model return the correct result?"""
 
-reloaded_results = reloaded_model(testing_wav_data)
-detected_sound = my_classes[tf.argmax(reloaded_results)]
-print(f'The main sound is: {detected_sound}')
 
 """If you want to try your new model on a serving setup, you can use the 'serving_default' signature."""
 
-serving_results = reloaded_model.signatures['serving_default'](testing_wav_data)
-detected_sound = my_classes[tf.argmax(serving_results['classifier'])]
-print(f'The main sound is: {detected_sound}')
 
 """## (Optional) Some more testing
 The model is ready. Let's compare it to YAMNet on the test dataset.
@@ -382,3 +356,13 @@ You just created a model that can classify sounds from dogs or cats.
 With the same idea and proper data you could, for example, build a bird recognizer based on their singing.
 Let us know what you come up with! Share with on social media your project.
 """
+
+def save_classes_to_csv():
+    with open(saved_model_path + '/assets/yamnet_class_map.csv', 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["index", "mid", "display_name"])
+        for class_name in my_classes:
+            writer.writerow([0, 0, class_name])
+
+
+save_classes_to_csv()

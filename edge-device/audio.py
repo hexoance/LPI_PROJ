@@ -6,12 +6,12 @@ import io
 import csv
 
 fs = 16000  # sample rate (Hz)
-duration = 1.92  # seconds, multiple of 0.96 (length of the sliding window)
+duration = 0.96  # seconds, multiple of 0.96 (length of the sliding window)
 samples = int(duration * fs)
 recording = np.zeros((0, 1))  # initialize recording shape
 
-#DATASETS_PATH = './datasets/'
-DATASETS_PATH ='D:/datasets/'
+DATASETS_PATH = '../retrain-models/datasets/'
+#DATASETS_PATH ='D:/datasets/'
 
 datasets = ['ESC-50-master', 'FSD50k']
 DATASET_NAME = datasets[1]
@@ -81,4 +81,7 @@ class AudioInference:
         your_infered_class = classes[your_top_class]
         class_probabilities = tf.nn.softmax(results, axis=-1)
         your_top_score = class_probabilities[your_top_class]
+        second_top_score = class_probabilities[tf.nn.top_k(results, k=2).indices.numpy()[1]]
+        if your_top_score - second_top_score <= 0.4:
+            your_infered_class = "Unknown"
         print(f'[Your model] The main sound is: {your_infered_class} ({your_top_score})')

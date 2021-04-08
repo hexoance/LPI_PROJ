@@ -3,8 +3,8 @@ import shutil
 from pydub import AudioSegment
 import random
 
-#DATASETS_PATH = './datasets/'
-DATASETS_PATH = 'D:/datasets/'
+DATASETS_PATH = './datasets/'
+#DATASETS_PATH = 'D:/datasets/'
 DATASET = 'FSD50k/'
 classes = []
 ids = {}
