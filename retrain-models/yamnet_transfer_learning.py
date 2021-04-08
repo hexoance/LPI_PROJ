@@ -13,7 +13,7 @@
 
 Start by installing [TensorFlow I/O](https://www.tensorflow.org/io), which will make it easier for you to load audio files off disk.
 """
-
+import csv
 import os
 
 import matplotlib.pyplot as plt
@@ -148,15 +148,15 @@ You will create a pandas dataframe with the mapping and use that to have a clear
 """
 
 datasets = ['ESC-50-master', 'FSD50k']
-dataset_name = datasets[1]
+DATASET_NAME = datasets[1]
 fold_val = 2
 fold_eval = 3
 
-DATASETS_PATH = './datasets/'
-#DATASETS_PATH ='D:/datasets/'
+#DATASETS_PATH = './datasets/'
+DATASETS_PATH ='D:/datasets/'
 
-files_csv = DATASETS_PATH + dataset_name + '/data_mapping.csv'
-base_data_path = DATASETS_PATH + dataset_name + '/audio/'
+files_csv = DATASETS_PATH + DATASET_NAME + '/data_mapping.csv'
+base_data_path = DATASETS_PATH + DATASET_NAME + '/audio/'
 
 pd_data = pd.read_csv(files_csv)
 pd_data.head()
@@ -168,7 +168,22 @@ Given the data on the dataframe, you will apply some transformations:
 - change targets to be within a specific range. In this example, dog will remain 0, but cat will become 1 instead of its original value of 5.
 """
 
-my_classes = ['Computer_keyboard', 'Knock', 'Scissors']
+my_classes = []
+
+
+def readClasses(file):
+    with open(DATASETS_PATH + DATASET_NAME + '/' + file, newline='') as f:
+        reader = csv.reader(f)
+        iterreader = iter(reader)
+        next(iterreader)
+        for row in iterreader:
+            my_classes.append(row[0])
+
+        #print(my_classes)
+
+
+readClasses('classes.csv')
+
 map_class_to_id = {}
 
 for i in range(len(my_classes)):
@@ -337,7 +352,7 @@ print(f'The main sound is: {detected_sound}')
 The model is ready. Let's compare it to YAMNet on the test dataset.
 """
 
-test_pd = filtered_pd.loc[filtered_pd['fold'] == 3]
+test_pd = filtered_pd.loc[filtered_pd['fold'] == fold_eval]
 row = test_pd.sample(1)
 filename = row['filename'].item()
 print(filename)

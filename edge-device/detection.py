@@ -93,14 +93,14 @@ if __name__ == '__main__':
             cv2.imshow('Video', output_rgb)
             fps.update()
 
-            print('[INFO] elapsed time: {:.2f}'.format(time.time() - t))
+            #print('[INFO] elapsed time: {:.2f}'.format(time.time() - t))
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
     fps.stop()
-    print('[INFO] elapsed time (total): {:.2f}'.format(fps.elapsed()))
-    print('[INFO] approx. FPS: {:.2f}'.format(fps.fps()))
+    #print('[INFO] elapsed time (total): {:.2f}'.format(fps.elapsed()))
+    #print('[INFO] approx. FPS: {:.2f}'.format(fps.fps()))
 
     pool.terminate()
     video_capture.stop()

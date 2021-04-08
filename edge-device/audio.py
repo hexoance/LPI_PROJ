@@ -9,7 +9,27 @@ fs = 16000  # sample rate (Hz)
 duration = 1.92  # seconds, multiple of 0.96 (length of the sliding window)
 samples = int(duration * fs)
 recording = np.zeros((0, 1))  # initialize recording shape
-classes = ['Computer_keyboard', 'Knock', 'Scissors']
+
+#DATASETS_PATH = './datasets/'
+DATASETS_PATH ='D:/datasets/'
+
+datasets = ['ESC-50-master', 'FSD50k']
+DATASET_NAME = datasets[1]
+
+classes = []
+
+def readClasses(file):
+    with open(DATASETS_PATH + DATASET_NAME + '/' + file, newline='') as f:
+        reader = csv.reader(f)
+        iterreader = iter(reader)
+        next(iterreader)
+        for row in iterreader:
+            classes.append(row[0])
+
+        #print(classes)
+
+
+readClasses('classes.csv')
 
 
 class AudioInference:
