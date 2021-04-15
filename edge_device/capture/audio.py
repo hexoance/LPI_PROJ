@@ -2,7 +2,7 @@ import numpy as np
 import sounddevice as sd
 
 fs = 16000  # sample rate (Hz)
-duration = 1.92  # seconds, multiple of 0.96 (length of the sliding window)
+duration = 0.96  # seconds, multiple of 0.96 (length of the sliding window)
 samples = int(duration * fs)
 recording = np.zeros((0, 1))  # initialize recording shape
 

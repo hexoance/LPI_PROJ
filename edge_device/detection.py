@@ -1,47 +1,67 @@
 import argparse
-import multiprocessing
 import datetime
 
-from inference.audio import AudioInference
+from inference.audio_yamnet import AudioInference
+from inference.audio_yamnet_retrained import AudioRetrainedInference
 from inference.video import VideoInference
 from capture.audio import MicrophoneAudioStream
 from capture.video import WebcamVideoStream
 from multiprocessing import Queue, Pool
+from edge_device.const import MODEL_THRESHOLD, MODEL_DIFERENCE, MODEL_UNKOWN
 
 from openhab import OpenHAB
 
 base_url = 'http://192.168.1.67:8080/rest'
 openhab = OpenHAB(base_url)
 
-item_label = openhab.get_item('Input')
+item_label_video = openhab.get_item('Input')
 item_label_audio = openhab.get_item('Input2')
+
+models = {
+    'audio': [
+        {'name': 'yamnet_1', 'duration': 0.96, 'frequency': 16000, 'model': AudioInference},
+        {'name': 'new_yamnet', 'duration': 0.96, 'frequency': 16000, 'model': AudioRetrainedInference}
+    ],
+    'video': [
+        {'name': 'charades', 'model': VideoInference}
+    ]
+}
 
 
 def data_processing_worker(in_q, out_q):
 
     while True:
         item = in_q.get()
-        out_q.put(item)
+        for model in models[item['type']]:
+            new_item = {'type': item['type'], 'name': model['name'], 'data': item['data'][:]}
+            out_q.put(new_item)
 
 
 def inference_worker(in_q, out_q):
-    audio = AudioInference()
-    video = VideoInference(output_q)
-    inference = {'audio': audio.inference, 'video': video.inference}
+    local_models = {}
+    for audio_model in models['audio']:
+        model = audio_model['model'](audio_model)
+        local_models[audio_model['name']] = model
+
+    for video_model in models['video']:
+        model = video_model['model'](output_q)
+        local_models[video_model['name']] = model
 
     while True:
         item = in_q.get()
-        prediction = inference[item['type']](item['data'])
-        out_q.put({'prediction': prediction, 'type': item['type']})
+        prediction = local_models[item['name']].inference(item['data'])
+        if prediction != MODEL_UNKOWN:
+            out_q.put({'prediction': prediction, 'type': item['type']})
 
 
 def network_worker(in_q):
 
     while True:
         item = in_q.get()
+
         label = None
         if item['type'] == 'video':
-            label = item_label
+            label = item_label_video
         elif item['type'] == 'audio':
             label = item_label_audio
 
@@ -63,8 +83,8 @@ if __name__ == '__main__':
                         default=5, help='Size of the queue.')
     args = parser.parse_args()
 
-    logger = multiprocessing.log_to_stderr()
-    logger.setLevel(multiprocessing.SUBDEBUG)
+    #logger = multiprocessing.log_to_stderr()
+    #logger.setLevel(multiprocessing.SUBDEBUG)
 
     output_q = Queue(maxsize=args.queue_size)
     data_captured_q = Queue(maxsize=args.queue_size)
@@ -79,7 +99,10 @@ if __name__ == '__main__':
                                       width=args.width,
                                       height=args.height,
                                       in_q=data_captured_q,
-                                      out_q=output_q).start()
+                                      out_q=output_q)
+
+    if video_capture.found:
+        video_capture.start()
 
     audio_capture = MicrophoneAudioStream(src=0, in_q=data_captured_q).start()
 

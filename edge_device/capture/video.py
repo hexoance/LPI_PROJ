@@ -7,6 +7,13 @@ class WebcamVideoStream:
     def __init__(self, src, width, height, in_q, out_q):
         # initialize the video camera stream and read the first frame from the stream
         self.stream = cv2.VideoCapture(src)
+        self.found = True
+
+        if self.stream is None or not self.stream.isOpened():
+            print("[VIDEO] Webcam not available!")
+            self.found = False
+            return
+
         self.stream.set(cv2.CAP_PROP_FRAME_WIDTH, width)
         self.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
         _, _ = self.stream.read()
@@ -45,7 +52,7 @@ class WebcamVideoStream:
             output_rgb = cv2.cvtColor(vis_frame, cv2.COLOR_RGB2BGR)
             cv2.imshow('Video', output_rgb)
 
-            print('[INFO] elapsed time: {:.2f}'.format(time.time() - t))
+            #print('[INFO] elapsed time: {:.2f}'.format(time.time() - t))
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break

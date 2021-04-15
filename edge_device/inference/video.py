@@ -91,7 +91,7 @@ class VideoInference:
         classes = np.argsort(accumulator)[::-1][:3]
         boxes = np.array([[0.1, 0, 0.1, 0], [0.2, 0, 0.2, 0], [0.3, 0, 0.3, 0]])
 
-        print('[VIDEO]:', self.category_classes[classes[0]])
+        #print('[VIDEO]:', self.category_classes[classes[0]])
 
         vis_util.visualize_boxes_and_labels_on_image_array(
             image_np,
