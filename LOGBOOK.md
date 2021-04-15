@@ -70,3 +70,15 @@ Se continuar, aumentar o grau do alerta.
 
 - Em relação ao video:
   - Usar Video para identificar: a pessoa "interessante" (ex. usar o rosto), a localização na casa (ex. quarto, cozinha, etc), a ação dessa pessoa (ex. sentada, cozinhar)
+
+## **15/04/2021**
+- Trabalhar em condições ótimas (sem ruídos e sem silêncio):
+   - Ex: 2 Classes => 40 Sons perfeitos
+  
+
+- Passar o som com ruído por um filtro para deixar o som em especifico sozinho:
+   - Ex. Computer_keyboard + Ruido => Filtro => Computer_keyboard
+
+
+- Fazer Excel com sequencias de audio significativas nos ficheiros.
+
