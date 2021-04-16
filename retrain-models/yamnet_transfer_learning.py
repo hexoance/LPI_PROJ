@@ -262,7 +262,7 @@ my_model.compile(
 
 callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=3, restore_best_weights=True)
 
-history = my_model.fit(train_ds, epochs=20, validation_data=val_ds, callbacks=callback)
+history = my_model.fit(train_ds, epochs=50, validation_data=val_ds, callbacks=callback)
 
 """Lets run the evaluate method on the test data just to be sure there's no overfitting."""
 
@@ -310,7 +310,7 @@ serving_outputs = ReduceMeanLayer(axis=0, name='classifier')(serving_outputs)
 serving_model = tf.keras.Model(input_segment, serving_outputs)
 serving_model.save(saved_model_path, include_optimizer=False)
 
-tf.keras.utils.plot_model(serving_model)
+# tf.keras.utils.plot_model(serving_model)
 
 """Load your saved model to verify that it works as expected."""
 

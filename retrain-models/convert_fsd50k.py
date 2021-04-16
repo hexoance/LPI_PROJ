@@ -78,6 +78,27 @@ def balanceWavFiles(maps):
     print("\nReady to Write:\n", {'Balanced Classes:': maps})
 
 
+def remove_silence(sound, silence_threshold=-50.0, chunk_size=100):
+    '''
+    sound is a pydub.AudioSegment
+    silence_threshold in dB
+    chunk_size in ms
+
+    iterate over chunks until you find the first one with sound
+    '''
+
+    sound_ms = 0  # ms
+    trimmed_sound = AudioSegment.empty()
+
+    assert chunk_size > 0  # to avoid infinite loop
+    while sound_ms < len(sound):
+        if sound[sound_ms:sound_ms+chunk_size].dBFS >= silence_threshold:
+            trimmed_sound += sound[sound_ms:sound_ms+chunk_size]
+        sound_ms += chunk_size
+
+    return trimmed_sound.set_sample_width(2)
+
+
 def copy_matching_files(maps):
     for mapping in maps:
         folder = "audio-dev/"
@@ -88,11 +109,12 @@ def copy_matching_files(maps):
         audio = AudioSegment.from_wav(DATASETS_PATH + DATASET + "audio/" + mapping[0])
 
         # create x sec of silence audio segment
-        silence = AudioSegment.silent(duration=30000 - (audio.duration_seconds * 1000))  # silence in milliseconds
-        audio = audio + silence
-        audio = audio[:5000]
+        #silence = AudioSegment.silent(duration=30000 - (audio.duration_seconds * 1000))  # silence in milliseconds
+        #audio = audio + silence
+        #audio = audio[:5000]
 
-        audio.export(DATASETS_PATH + DATASET + "audio/" + mapping[0], format="wav")
+        trimmed_audio = remove_silence(audio)
+        trimmed_audio.export(DATASETS_PATH + DATASET + "audio/" + mapping[0], format="wav")
 
 readClasses('classes.csv')
 readVocabulary('vocabulary.csv')
