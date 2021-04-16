@@ -81,9 +81,6 @@ def load_wav_16k_mono(filename):
     return wav
 
 
-
-
-
 """### Load the class mapping
 It's important to load the class names that YAMNet is able to recognize.
 The mapping file is present at `yamnet_model.class_map_path()`, in the `csv` format.
@@ -132,6 +129,7 @@ You will create a pandas dataframe with the mapping and use that to have a clear
 
 datasets = ['ESC-50-master', 'FSD50k']
 DATASET_NAME = datasets[1]
+fold_train = 1
 fold_val = 2
 fold_eval = 3
 
@@ -226,7 +224,7 @@ The last step is to remove the `fold` column from the dataset since we're not go
 """
 
 cached_ds = main_ds.cache()
-train_ds = cached_ds.filter(lambda embedding, label, fold: fold < fold_val)
+train_ds = cached_ds.filter(lambda embedding, label, fold: fold == fold_train)
 val_ds = cached_ds.filter(lambda embedding, label, fold: fold == fold_val)
 test_ds = cached_ds.filter(lambda embedding, label, fold: fold == fold_eval)
 

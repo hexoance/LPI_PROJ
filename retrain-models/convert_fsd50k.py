@@ -3,6 +3,13 @@ import shutil
 from pydub import AudioSegment
 import random
 
+TRAIN_DS_PERCENTAGE = 0.7
+VAL_DS_PERCENTAGE = 0.15
+TEST_DS_PERCENTAGE = 0.15
+
+if TRAIN_DS_PERCENTAGE + VAL_DS_PERCENTAGE + TEST_DS_PERCENTAGE != 1:
+    raise Exception('Train/Val/Test split sum must be equal to 100%')
+
 DATASETS_PATH = './datasets/'
 #DATASETS_PATH = 'D:/datasets/'
 DATASET = 'FSD50k/'
@@ -69,13 +76,39 @@ def balanceWavFiles(maps):
     min_count = min(val['count'] for key, val in classes_maps.items())
     print("\nClasses to Balance (MIN):", min_count)
 
+    train_ds = int(min_count * TRAIN_DS_PERCENTAGE)
+    val_ds = int(min_count * VAL_DS_PERCENTAGE)
+    test_ds = int(min_count * TEST_DS_PERCENTAGE)
+
+    dif = min_count - (train_ds + val_ds + test_ds)
+    train_ds += dif
+
+    print("Train DS size: " + str(train_ds))
+    print("Val DS size: " + str(val_ds))
+    print("Test DS size: " + str(test_ds))
+
     # Obter os MIN ficheiros .wav aleatórios de cada classe
     maps = []
     for category in classes_maps:
+
+        train_ds_counter = train_ds
+        val_ds_counter = val_ds
+        test_ds_counter = test_ds
+
         for line in random.sample(classes_maps[category]['maps'], min_count):
+            if train_ds_counter > 0:
+                line[1] = 1
+                train_ds_counter -= 1
+            elif val_ds_counter > 0:
+                line[1] = 2
+                val_ds_counter -= 1
+            elif test_ds_counter > 0:
+                line[1] = 3
+                test_ds_counter -= 1
             maps.append(line)
 
     print("\nReady to Write:\n", {'Balanced Classes:': maps})
+    return maps
 
 
 def remove_silence(sound, silence_threshold=-50.0, chunk_size=100):
@@ -102,8 +135,14 @@ def remove_silence(sound, silence_threshold=-50.0, chunk_size=100):
 def copy_matching_files(maps):
     for mapping in maps:
         folder = "audio-dev/"
-        if mapping[1] == '3':
+
+        try:
+            with open(DATASETS_PATH + DATASET + folder + mapping[0]) as f:
+                pass
+                # Do something with the file
+        except IOError:
             folder = "audio-eval/"
+
         shutil.copyfile(DATASETS_PATH + DATASET + folder + mapping[0], DATASETS_PATH + DATASET + "audio/" + mapping[0])
 
         audio = AudioSegment.from_wav(DATASETS_PATH + DATASET + "audio/" + mapping[0])
@@ -120,6 +159,6 @@ readClasses('classes.csv')
 readVocabulary('vocabulary.csv')
 extract_mappings('dev.csv')
 extract_mappings('eval.csv')
-balanceWavFiles(mappings)
+mappings = balanceWavFiles(mappings)
 save_mappings_to_csv(mappings)
 copy_matching_files(mappings)
