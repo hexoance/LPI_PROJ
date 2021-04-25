@@ -111,7 +111,7 @@ def balanceWavFiles(maps):
     return maps
 
 
-def remove_silence(sound, silence_threshold=-50.0, chunk_size=100):
+def detect_leading_silence(sound, silence_threshold=-50.0, chunk_size=10):
     '''
     sound is a pydub.AudioSegment
     silence_threshold in dB
@@ -119,17 +119,13 @@ def remove_silence(sound, silence_threshold=-50.0, chunk_size=100):
 
     iterate over chunks until you find the first one with sound
     '''
+    trim_ms = 0 # ms
 
-    sound_ms = 0  # ms
-    trimmed_sound = AudioSegment.empty()
+    assert chunk_size > 0 # to avoid infinite loop
+    while sound[trim_ms:trim_ms+chunk_size].dBFS < silence_threshold and trim_ms < len(sound):
+        trim_ms += chunk_size
 
-    assert chunk_size > 0  # to avoid infinite loop
-    while sound_ms < len(sound):
-        if sound[sound_ms:sound_ms+chunk_size].dBFS >= silence_threshold:
-            trimmed_sound += sound[sound_ms:sound_ms+chunk_size]
-        sound_ms += chunk_size
-
-    return trimmed_sound.set_sample_width(2)
+    return trim_ms
 
 
 def copy_matching_files(maps):
@@ -152,8 +148,13 @@ def copy_matching_files(maps):
         #audio = audio + silence
         #audio = audio[:5000]
 
-        trimmed_audio = remove_silence(audio)
-        trimmed_audio.export(DATASETS_PATH + DATASET + "audio/" + mapping[0], format="wav")
+        start_trim = detect_leading_silence(audio)
+        end_trim = detect_leading_silence(audio.reverse())
+
+        duration = len(audio)
+        trimmed_sound = audio[start_trim:duration - end_trim]
+
+        trimmed_sound.export(DATASETS_PATH + DATASET + "audio/" + mapping[0], format="wav")
         #audio.export(DATASETS_PATH + DATASET + "audio/" + mapping[0], format="wav")
 
 
