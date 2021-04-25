@@ -3,9 +3,9 @@ import shutil
 from pydub import AudioSegment
 import random
 
-TRAIN_DS_PERCENTAGE = 0.7
-VAL_DS_PERCENTAGE = 0.15
-TEST_DS_PERCENTAGE = 0.15
+TRAIN_DS_PERCENTAGE = 0.8
+VAL_DS_PERCENTAGE = 0.0
+TEST_DS_PERCENTAGE = 0.2
 
 if TRAIN_DS_PERCENTAGE + VAL_DS_PERCENTAGE + TEST_DS_PERCENTAGE != 1:
     raise Exception('Train/Val/Test split sum must be equal to 100%')
@@ -154,11 +154,29 @@ def copy_matching_files(maps):
 
         trimmed_audio = remove_silence(audio)
         trimmed_audio.export(DATASETS_PATH + DATASET + "audio/" + mapping[0], format="wav")
+        #audio.export(DATASETS_PATH + DATASET + "audio/" + mapping[0], format="wav")
+
+
+def sound_filter(maps):
+
+    filtered_files = {}
+    with open(DATASETS_PATH + DATASET + "sound_filter.csv", newline='') as f:
+        reader = csv.reader(f)
+        for row in reader:
+            filtered_files[row[0]] = row
+    filtered_maps = []
+    for file in maps:
+        if file[0] in filtered_files:
+            filtered_maps.append(file)
+    #print({"Sounds Filtered" : filtered_maps})
+    return filtered_maps
+
 
 readClasses('classes.csv')
 readVocabulary('vocabulary.csv')
 extract_mappings('dev.csv')
 extract_mappings('eval.csv')
+#mappings = sound_filter(mappings)
 mappings = balanceWavFiles(mappings)
 save_mappings_to_csv(mappings)
 copy_matching_files(mappings)

@@ -260,7 +260,8 @@ my_model.compile(
 
 callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=3, restore_best_weights=True)
 
-history = my_model.fit(train_ds, epochs=50, validation_data=val_ds, callbacks=callback)
+#history = my_model.fit(train_ds, epochs=50, validation_data=val_ds, callbacks=callback)
+history = my_model.fit(train_ds, epochs=50, callbacks=callback)
 
 """Lets run the evaluate method on the test data just to be sure there's no overfitting."""
 
