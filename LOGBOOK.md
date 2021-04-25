@@ -82,3 +82,11 @@ Se continuar, aumentar o grau do alerta.
 
 - Fazer Excel com sequencias de audio significativas nos ficheiros.
 
+## **22/04/2021**
+
+- Usar apenas o validation com as percentagens 80% treino e 20% teste.
+- Retirar silêncio apenas no inicio e no fim dos ficheiros audio (.WAV).
+- Analisar os ficheiros um a um do dataset (Polir o dataset).
+- Adicionar ou não mais dados de outro dataset.
+       
+
