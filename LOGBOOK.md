@@ -1,4 +1,4 @@
-## **18/02/2021**
+ ## **18/02/2021**
 #### Contextualização do Projeto:
 - ['Dive into Deep Learning' book](https://d2l.ai/)
 - [Sound Classification (Generic)](https://mikesmales.medium.com/sound-classification-using-deep-learning-8bc2aa1990b7)
@@ -89,4 +89,9 @@ Se continuar, aumentar o grau do alerta.
 - Analisar os ficheiros um a um do dataset (Polir o dataset).
 - Adicionar ou não mais dados de outro dataset.
        
+## **29/04/2021**
 
+- Criar e implementar uma nova classe: Silêncio.
+- Verificar se o silêncio existente no ficheiro é maior do que o chunk de procura, de forma a não estragar o padrão caraterístico do som.
+- Fazer o pré-processamento do áudio (raw data) detetado no microfone e só depois passá-lo ao modelo.
+- Gravam se detetarem movimento/audio.
