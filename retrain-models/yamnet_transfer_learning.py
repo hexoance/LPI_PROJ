@@ -1,27 +1,23 @@
 """
 # Transfer Learning with YAMNet for environmental sound classification
 
-[YAMNet](https://tfhub.dev/google/yamnet/1) is an audio event classifier that can predict audio events from [521 classes](https://github.com/tensorflow/models/blob/master/research/audioset/yamnet/yamnet_class_map.csv), like laughter, barking, or a siren. 
+[YAMNet](https://tfhub.dev/google/yamnet/1) is an audio event classifier that can predict audio events 
+from [521 classes](https://github.com/tensorflow/models/blob/master/research/audioset/yamnet/yamnet_class_map.csv), 
+like laughter, barking, or a siren.
 
  In this tutorial you will learn how to:
 
 - Load and use the YAMNet model for inference.
 - Build a new model using the YAMNet embeddings to classify cat and dog sounds.
 - Evaluate and export your model.
-
-## Import TensorFlow and other libraries
-
-Start by installing [TensorFlow I/O](https://www.tensorflow.org/io), which will make it easier for you to load audio files off disk.
 """
 import csv
 import os
 
-import matplotlib.pyplot as plt
 import pandas as pd
 import tensorflow as tf
 import tensorflow_hub as hub
 import tensorflow_io as tfio
-from IPython import display
 
 """## About YAMNet
 
@@ -47,28 +43,21 @@ having to train a large model end-to-end.
 You will use YAMNet's embeddings output for transfer learning and train one or more 
 [Dense](https://www.tensorflow.org/api_docs/python/tf/keras/layers/Dense) layers on top of this.
 
-First, you will try the model and see the results of classifying audio. You will then construct the data pre-processing pipeline.
+First, try the model and see the results of classifying audio. Then construct the data pre-processing pipeline.
 
 ### Loading YAMNet from TensorFlow Hub
-
-You are going to use YAMNet from [Tensorflow Hub](https://tfhub.dev/) to extract the embeddings from the sound files.
+Use YAMNet from [Tensorflow Hub](https://tfhub.dev/) to extract the embeddings from the sound files.
 Loading a model from TensorFlow Hub is straightforward: choose the model, copy its URL and use the `load` function.
-Note: to read the documentation of the model, you can use the model url in your browser.
+Note: to read the documentation of the model, use the model url in the browser.
 """
 
 yamnet_model_handle = 'https://tfhub.dev/google/yamnet/1'
 yamnet_model = hub.load(yamnet_model_handle)
 
-"""With the model loaded and following the [models's basic usage tutorial](https://www.tensorflow.org/hub/tutorials/yamnet) you'll download a sample wav file and run the inference.
+""" Function to load the audio files. Will also be used later when working with the training data. Note: The returned 
+`wav_data` from `load_wav_16k_mono` is already normalized to values in `[-1.0, 1.0]`.
 """
 
-
-"""You will need a function to load the audio files. They will also be used later when working with the training data.
-Note: The returned `wav_data` from `load_wav_16k_mono` is already normalized to values in `[-1.0, 1.0]` (as stated in the model's [documentation](https://tfhub.dev/google/yamnet/1)).
-"""
-
-
-# Util functions for loading audio files and ensure the correct sample rate
 
 @tf.function
 def load_wav_16k_mono(filename):
@@ -85,13 +74,8 @@ def load_wav_16k_mono(filename):
 It's important to load the class names that YAMNet is able to recognize.
 The mapping file is present at `yamnet_model.class_map_path()`, in the `csv` format.
 """
-
 class_map_path = yamnet_model.class_map_path().numpy().decode('utf-8')
 class_names = list(pd.read_csv(class_map_path)['display_name'])
-
-for name in class_names[:20]:
-    print(name)
-print('...')
 
 """### Run inference
 YAMNet provides frame-level class-scores (i.e., 521 scores for every frame).
@@ -100,35 +84,12 @@ across frames (e.g., using mean or max aggregation). This is done below by `scor
 Finally, in order to find the top-scored class at the clip-level, we take the maximum of the 521 aggregated scores.
 """
 
+""" The metadata for each file is specified in the csv file at `./datasets/AUDIO-GENERATED/mappings.csv` and 
+all the audio files are in `./datasets/AUDIO-GENERATED/audio/` """
 
-"""Note: The model correctly inferred an animal sound. Your goal is to increase accuracy for specific classes. Also, notice that the the model generated 13 embeddings, 1 per frame.
-
-## ESC-50 dataset
-
-The [ESC-50 dataset](https://github.com/karolpiczak/ESC-50#repository-content), 
-well described [here](https://www.karolpiczak.com/papers/Piczak2015-ESC-Dataset.pdf), 
-is a labeled collection of 2000 environmental audio recordings (each 5 seconds long). 
-The data consists of 50 classes, with 40 examples per class.
-
-Next, you will download and extract it.
-"""
-
-"""
-_ = tf.keras.utils.get_file('esc-50.zip',
-                            'https://github.com/karoldvl/ESC-50/archive/master.zip',
-                            cache_dir='./',
-                            cache_subdir='datasets',
-                            extract=True)
-"""
-
-"""### Explore the data
-The metadata for each file is specified in the csv file at `./datasets/ESC-50-master/meta/data_mapping.csv` and 
-all the audio files are in `./datasets/ESC-50-master/audio/`
-You will create a pandas dataframe with the mapping and use that to have a clearer view of the data.
-"""
-
-datasets = ['ESC-50-master', 'FSD50k']
-DATASET_NAME = datasets[1]
+saved_model_path = '../models/new_yamnet'
+dataset_names = ['GENERATED-SOUNDS', 'ESC-50', 'FSD50k']
+DATASET_NAME = dataset_names[0]
 fold_train = 1
 fold_val = 2
 fold_eval = 3
@@ -136,37 +97,34 @@ fold_eval = 3
 DATASETS_PATH = './datasets/'
 # DATASETS_PATH ='D:/datasets/'
 
-files_csv = DATASETS_PATH + DATASET_NAME + '/data_mapping.csv'
+files_csv = DATASETS_PATH + DATASET_NAME + '/mappings.csv'
 base_data_path = DATASETS_PATH + DATASET_NAME + '/audio/'
 
+# Create a pandas dataframe with the mapping and use that to have a clearer view of the data.
 pd_data = pd.read_csv(files_csv)
 pd_data.head()
 
 """### Filter the data
-Given the data on the dataframe, you will apply some transformations:
-- filter out rows and use only the selected classes (dog and cat). If you want to use any other classes, this is where you can choose them.
+Given the data on the dataframe, apply some transformations:
+- filter out rows and use only the selected classes. To use any other classes, this is where to choose them.
 - change the filename to have the full path. This will make loading easier later.
-- change targets to be within a specific range. In this example, dog will remain 0, but cat will become 1 instead of its original value of 5.
+- change targets to be within a specific range.
 """
 
-my_classes = []
 
-
-def readClasses(file):
-    with open(DATASETS_PATH + DATASET_NAME + '/' + file, newline='') as f:
+def read_classes(file):
+    classes = []
+    with open(file, newline='') as f:
         reader = csv.reader(f)
-        iterreader = iter(reader)
-        next(iterreader)
-        for row in iterreader:
-            my_classes.append(row[0])
+        iterator = iter(reader)
+        next(iterator)
+        for row in iterator:
+            classes.append(row[0])
+    return classes
 
-        # print(my_classes)
 
-
-readClasses('classes.csv')
-
+my_classes = read_classes('classes_to_retrain.csv')
 map_class_to_id = {}
-
 for i in range(len(my_classes)):
     map_class_to_id[my_classes[i]] = i
 
@@ -181,18 +139,19 @@ filtered_pd = filtered_pd.assign(filename=full_path)
 filtered_pd.head(10)
 
 """### Load the audio files and retrieve embeddings
-Here you'll apply the `load_wav_16k_mono` and prepare the wav data for the model.
-When extracting embeddings from the wav data, you get an array of shape `(N, 1024)` where `N` is the number of frames that YAMNet found (one for every 0.48 seconds of audio).
-Your model will use each frame as one input so you need to to create a new column that has one frame per row. You also need to expand the labels and fold column to proper reflect these new rows.
-The expanded fold column keeps the original value. You cannot mix frames because, when doing the splits, you might end with parts of the same audio on different splits and that would make our validation and test steps less effective.
+Apply the `load_wav_16k_mono` and prepare the wav data for the model.
+When extracting embeddings from the wav data, you get an array of shape `(N, 1024)` where `N` is the number of frames 
+    that YAMNet found (one for every 0.48 seconds of audio).
+Your model will use each frame as one input so you need to to create a new column that has one frame per row. You also 
+    need to expand the labels and fold column to proper reflect these new rows.
+The expanded fold column keeps the original value. You cannot mix frames because, when doing the splits, you might end 
+    with parts of the same audio on different splits and that would make our validation and test steps less effective.
 """
-
 filenames = filtered_pd['filename']
 targets = filtered_pd['target']
 folds = filtered_pd['fold']
 
 main_ds = tf.data.Dataset.from_tensor_slices((filenames, targets, folds))
-main_ds.element_spec
 
 
 def load_wav_for_map(filename, label, fold):
@@ -200,12 +159,11 @@ def load_wav_for_map(filename, label, fold):
 
 
 main_ds = main_ds.map(load_wav_for_map)
-main_ds.element_spec
 
 
 # applies the embedding extraction model to a wav data
 def extract_embedding(wav_data, label, fold):
-    ''' run YAMNet to extract embedding from the wav data '''
+    """ run YAMNet to extract embedding from the wav data """
     scores, embeddings, spectrogram = yamnet_model(wav_data)
     num_embeddings = tf.shape(embeddings)[0]
     return (embeddings,
@@ -215,14 +173,13 @@ def extract_embedding(wav_data, label, fold):
 
 # extract embedding
 main_ds = main_ds.map(extract_embedding).unbatch()
-main_ds.element_spec
 
 """### Split the data
 You will use the `fold` column to split the dataset into train, validation and test.
-The fold values are so that files from the same original wav file are keep on the same split, you can find more information on the [paper](https://www.karolpiczak.com/papers/Piczak2015-ESC-Dataset.pdf) describing the dataset.
-The last step is to remove the `fold` column from the dataset since we're not going to use it anymore on the training process.
+The fold values are so that files from the same original wav file are kept on the same split, you can find more 
+    information on the [paper](https://www.karolpiczak.com/papers/Piczak2015-ESC-Dataset.pdf) describing the dataset.
+The last step is to remove the `fold` column from the dataset since we're not going to use it on the training process.
 """
-
 cached_ds = main_ds.cache()
 train_ds = cached_ds.filter(lambda embedding, label, fold: fold == fold_train)
 val_ds = cached_ds.filter(lambda embedding, label, fold: fold == fold_val)
@@ -239,13 +196,9 @@ train_ds = train_ds.cache().shuffle(1000).batch(32).prefetch(tf.data.AUTOTUNE)
 val_ds = val_ds.cache().batch(32).prefetch(tf.data.AUTOTUNE)
 test_ds = test_ds.cache().batch(32).prefetch(tf.data.AUTOTUNE)
 
-"""## Create your model
-You did most of the work!
-Next, define a very simple Sequential Model to start with -- one hiden layer and 2 outputs to recognize cats and dogs.
-"""
-
+""" Define a simple Sequential Model to start with: one hidden layer and 'n' outputs to recognize the classes. """
 my_model = tf.keras.Sequential([
-    tf.keras.layers.Input(shape=(1024), dtype=tf.float32, name='input_embedding'),
+    tf.keras.layers.Input(shape=1024, dtype=tf.float32, name='input_embedding'),
     tf.keras.layers.Dense(512, activation='relu'),
     tf.keras.layers.Dense(len(my_classes))
 ], name='my_model')
@@ -260,23 +213,13 @@ my_model.compile(
 
 callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=3, restore_best_weights=True)
 
-#history = my_model.fit(train_ds, epochs=50, validation_data=val_ds, callbacks=callback)
-history = my_model.fit(train_ds, epochs=50, callbacks=callback)
+# history = my_model.fit(train_ds, epochs=50, validation_data=val_ds, callbacks=callback)
+history = my_model.fit(train_ds, epochs=20, callbacks=callback)
 
-"""Lets run the evaluate method on the test data just to be sure there's no overfitting."""
-
+""" Lets run the evaluate method on the test data just to be sure there's no overfitting. """
 loss, accuracy = my_model.evaluate(test_ds)
-
 print("Loss: ", loss)
 print("Accuracy: ", accuracy)
-
-"""You did it!
-## Test your model
-Next, try your model on the embedding from the previous test using YAMNet only.
-"""
-
-
-
 
 """## Save a model that can directly take a wav file as input
 Your model works when you give it the embeddings as input.
@@ -299,8 +242,6 @@ class ReduceMeanLayer(tf.keras.layers.Layer):
         return tf.math.reduce_mean(input, axis=self.axis)
 
 
-saved_model_path = '../models/new_yamnet'
-
 input_segment = tf.keras.layers.Input(shape=(), dtype=tf.float32, name='audio')
 embedding_extraction_layer = hub.KerasLayer(yamnet_model_handle, trainable=False, name='yamnet')
 _, embeddings_output, _ = embedding_extraction_layer(input_segment)
@@ -309,34 +250,17 @@ serving_outputs = ReduceMeanLayer(axis=0, name='classifier')(serving_outputs)
 serving_model = tf.keras.Model(input_segment, serving_outputs)
 serving_model.save(saved_model_path, include_optimizer=False)
 
-# tf.keras.utils.plot_model(serving_model)
-
-"""Load your saved model to verify that it works as expected."""
-
+"""Load the saved model to verify that it works as expected. """
 reloaded_model = tf.saved_model.load(saved_model_path)
 
-"""And for the final test: given some sound data, does your model return the correct result?"""
-
-
-"""If you want to try your new model on a serving setup, you can use the 'serving_default' signature."""
-
-
-"""## (Optional) Some more testing
-The model is ready. Let's compare it to YAMNet on the test dataset.
-"""
-
+""" The model is ready. Let's compare it to YAMNet on the test dataset. """
 test_pd = filtered_pd.loc[filtered_pd['fold'] == fold_eval]
-row = test_pd.sample(1)
-filename = row['filename'].item()
-print(filename)
+filename = test_pd.sample(1)['filename'].item()
+print('Predicting the sound in -> ' + filename)
 waveform = load_wav_16k_mono(filename)
-print(f'Waveform values: {waveform}')
-_ = plt.plot(waveform)
-
-display.Audio(waveform, rate=16000)
 
 # Run the model, check the output.
-scores, embeddings, spectrogram = yamnet_model(waveform)
+scores, _, _ = yamnet_model(waveform)
 class_scores = tf.reduce_mean(scores, axis=0)
 top_class = tf.argmax(class_scores)
 infered_class = class_names[top_class]
@@ -350,11 +274,6 @@ class_probabilities = tf.nn.softmax(reloaded_results, axis=-1)
 your_top_score = class_probabilities[your_top_class]
 print(f'[Your model] The main sound is: {your_infered_class} ({your_top_score})')
 
-"""## Next steps
-You just created a model that can classify sounds from dogs or cats. 
-With the same idea and proper data you could, for example, build a bird recognizer based on their singing.
-Let us know what you come up with! Share with on social media your project.
-"""
 
 def save_classes_to_csv():
     with open(saved_model_path + '/assets/yamnet_class_map.csv', 'w', newline='') as file:

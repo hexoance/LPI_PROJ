@@ -13,7 +13,7 @@ recording = np.zeros((0, 1))  # initialize recording shape
 DATASETS_PATH = '../retrain-models/datasets/'
 #DATASETS_PATH ='D:/datasets/'
 
-datasets = ['ESC-50-master', 'FSD50k']
+datasets = ['ESC-50', 'FSD50k']
 DATASET_NAME = datasets[1]
 
 classes = []

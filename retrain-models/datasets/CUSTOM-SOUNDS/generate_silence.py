@@ -1,0 +1,35 @@
+import os
+import csv
+from pydub import AudioSegment
+
+SILENCE_DURATION = 5000
+SILENCE_FILES_GENERATED = 150
+AUDIO_FOLDER = "audio"
+
+
+def delete_all_files_from_folder(folder):
+    for root, dirs, files in os.walk(folder):
+        for file in files:
+            os.remove(os.path.join(root, file))
+
+
+def generate_silence_sounds(folder, n_files, duration):
+    for i in range(0, n_files):
+        # create x millisecond(s) of silence
+        silence_sound = AudioSegment.silent(duration=duration)
+
+        # Either save modified audio
+        silence_sound.export(folder + "/" + str(i) + ".wav", format="wav")
+
+
+def create_silence_mappings(n_files):
+    with open('mappings.csv', 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["filename", "category_id"])
+        for i in range(0, n_files):
+            writer.writerow([str(i) + ".wav", str(0)])
+
+
+delete_all_files_from_folder(AUDIO_FOLDER)
+generate_silence_sounds(AUDIO_FOLDER, SILENCE_FILES_GENERATED, SILENCE_DURATION)
+create_silence_mappings(SILENCE_FILES_GENERATED)
