@@ -25,9 +25,9 @@ def generate_silence_sounds(folder, n_files, duration):
 def create_silence_mappings(n_files):
     with open('mappings.csv', 'w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(["filename", "category_id"])
+        writer.writerow(["file_id", "category_id"])
         for i in range(0, n_files):
-            writer.writerow([str(i) + ".wav", str(0)])
+            writer.writerow([str(i), str(0)])
 
 
 delete_all_files_from_folder(AUDIO_FOLDER)

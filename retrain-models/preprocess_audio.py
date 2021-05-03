@@ -3,6 +3,8 @@ import csv
 from pydub import AudioSegment
 import random
 from utils.silence_removal import trim_silence, remove_middle_silence
+from utils.process_fsd50k import ProcessFSD50k
+from utils.process_custom_sounds import ProcessCustomSounds
 
 TRAIN_DS_PERCENTAGE = 0.8
 VAL_DS_PERCENTAGE = 0.0
@@ -13,48 +15,59 @@ if TRAIN_DS_PERCENTAGE + VAL_DS_PERCENTAGE + TEST_DS_PERCENTAGE != 1:
 
 DATASETS_PATH = './datasets/'
 # DATASETS_PATH = 'D:/datasets/'
-DATASETS = ['CUSTOM-SOUNDS', 'FSD50k', 'ESC-50']
-DATASET = DATASETS[1] + '/'
+
+datasets = [
+    ProcessCustomSounds,
+    ProcessFSD50k,
+    #'ESC-50',
+]
+
 GENERATED_PATH = DATASETS_PATH + 'GENERATED-SOUNDS/'
 
 
 def read_classes(file):
-    classes_read = []
+    classes_read = {}
+    i = 0
     with open(file, newline='') as f:
         reader = csv.reader(f)
         iterator = iter(reader)
         next(iterator)
         for row in iterator:
-            classes_read.append(row[0])
+            classes_read[row[0]] = {'id': i, 'count': 0, 'datasets': {}, 'mappings': []}
+            i += 1
+
     print(classes_read)
     return classes_read
 
 
+def read_vocabulary_mappings(file, classes):
+    with open(file, newline='') as f:
+        reader = csv.reader(f)
+        iterator = iter(reader)
+        next(iterator)
+        for row in iterator:
+            class_name = row[0]
+            dataset_name = row[1]
+            category_id = row[2]
+            matching_category_name = row[3]
+            if class_name in classes:
+                classes[class_name]['datasets'][dataset_name] = {'id': category_id, 'matching_category': matching_category_name}
+    print(classes)
+    return classes
+
+
 def read_vocabulary(file):
     vocabulary_read = {}
-    with open(DATASETS_PATH + DATASET + file, newline='') as f:
+    with open(file, newline='') as f:
         reader = csv.reader(f)
         for row in reader:
             vocabulary_read[row[1]] = row[0]
     return vocabulary_read
 
 
-def extract_mappings(file, maps, vocab):
-    with open(DATASETS_PATH + DATASET + file, newline='') as f:
-        reader = csv.reader(f)
-        iterreader = iter(reader)
-        next(iterreader)
-        for row in iterreader:
-            values = list(filter(lambda x: x in row[1].split(','), classes))
-            if values:
-                folder = DATASETS_PATH + DATASET + "audio-" + file.split('.')[0]
-                maps.append([folder + "/" + row[0] + ".wav", str(0), str(vocab[values[0]]), values[0]])
-    return maps
-
-
-def sound_filter(maps):
+def sound_filter(dataset_path, maps):
     filtered_files = {}
-    with open(DATASETS_PATH + DATASET + "sound_filter.csv", newline='') as f:
+    with open(dataset_path + "sound_filter.csv", newline='') as f:
         reader = csv.reader(f)
         for row in reader:
             filtered_files[row[0]] = row
@@ -67,18 +80,11 @@ def sound_filter(maps):
 
 def balance_wav_files(maps):
     # Classe -> Num. total de ficheiros .wav dessa classe (count) -> Array os ficheiros .wav (maps)
-    classes_maps = {}
+    min_count = 99999999
     for mapping in maps:
-        category = mapping[3]
-        if category not in classes_maps:
-            classes_maps[category] = {'count': 0, 'maps': []}
-        classes_maps[category]['count'] += 1
-        classes_maps[category]['maps'].append(mapping)
+        if maps[mapping]['count'] < min_count:
+            min_count = maps[mapping]['count']
 
-    print("\nClasses: \n", classes_maps)
-
-    # Número de ficheiros da Classe com menos ficheiros
-    min_count = min(val['count'] for key, val in classes_maps.items())
     print("\nClasses to Balance (MIN):", min_count)
 
     train_ds = int(min_count * TRAIN_DS_PERCENTAGE)
@@ -93,14 +99,14 @@ def balance_wav_files(maps):
     print("Test DS size: " + str(test_ds))
 
     # Obter os MIN ficheiros .wav aleatórios de cada classe
-    maps = []
-    for category in classes_maps:
+    for category in maps:
 
         train_ds_counter = train_ds
         val_ds_counter = val_ds
         test_ds_counter = test_ds
+        new_maps = []
 
-        for line in random.sample(classes_maps[category]['maps'], min_count):
+        for line in random.sample(maps[category]['mappings'], min_count):
             if train_ds_counter > 0:
                 line[1] = 1
                 train_ds_counter -= 1
@@ -110,19 +116,25 @@ def balance_wav_files(maps):
             elif test_ds_counter > 0:
                 line[1] = 3
                 test_ds_counter -= 1
-            maps.append(line)
+            new_maps.append(line)
+        maps[category]['mappings'] = new_maps
 
     print("\nReady to Write:\n", {'Balanced Classes:': maps})
     return maps
 
 
 def save_mappings_to_csv(maps):
+    i = 0
     with open(GENERATED_PATH + 'mappings.csv', 'w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(["filename", "fold", "target", "category"])
-        for mapping in maps:
-            mapping[0] = mapping[0].split('/')[-1]
-            writer.writerow(mapping)
+        writer.writerow(["filename", "fold", "target", "category", "old_filename"])
+        for category in maps:
+            for mapping in maps[category]['mappings']:
+                mapping.append(mapping[0])
+                mapping[3] = category
+                mapping[0] = str(i) + '.wav'
+                writer.writerow(mapping)
+                i += 1
 
 
 def delete_all_files_from_folder(folder):
@@ -137,24 +149,27 @@ def copy_matching_files(maps):
         remove_middle_silence,
     ]
 
-    for mapping in maps:
-        audio = AudioSegment.from_wav(mapping[0])
+    i = 0
+    for category in maps:
+        for mapping in maps[category]['mappings']:
+            audio = AudioSegment.from_wav(mapping[0])
 
-        # Run preprocessing operations on the audio, only if its not silence
-        if mappings[3] != 'silence':
-            for operation in audio_preprocessing_operations:
-                audio = operation(audio)
+            # Run preprocessing operations on the audio, only if its not silence
+            if category != 'silence':
+                for operation in audio_preprocessing_operations:
+                    audio = operation(audio)
 
-        audio.export(GENERATED_PATH + "audio/" + mapping[0].split('/')[-1], format="wav")
+            audio.export(GENERATED_PATH + "audio/" + str(i) + '.wav', format="wav")
+            i += 1
 
 
 if __name__ == '__main__':
-    classes = read_classes('classes_to_retrain.csv')
-    vocabulary = read_vocabulary('vocabulary.csv')
-    mappings = []
-    mappings = extract_mappings('dev.csv', mappings, vocabulary)
-    mappings = extract_mappings('eval.csv', mappings, vocabulary)
-    mappings = sound_filter(mappings)
+    mappings = read_classes('classes_to_retrain.csv')
+    mappings = read_vocabulary_mappings('datasets_vocabulary_mappings.csv', mappings)
+    for dataset in datasets:
+        mappings = dataset.extract_mappings(DATASETS_PATH, mappings)
+    for dataset in datasets:
+        mappings = dataset.filter(DATASETS_PATH, mappings)
     mappings = balance_wav_files(mappings)
     delete_all_files_from_folder(GENERATED_PATH + "audio")
     copy_matching_files(mappings)

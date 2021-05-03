@@ -1,6 +1,8 @@
-category,id,dataset
-scissors,143,FSD50k
-knock,106,FSD50k
-silence,0,CUSTOM-SOUNDS
-boiling,17,FSD50k
-bathtub,10,FSD50k
+category,dataset,id,matching_category
+scissors,FSD50k,143,Scissors
+knock,FSD50k,106,Knock
+silence,CUSTOM-SOUNDS,0,silence
+boiling,FSD50k,17,Boiling
+water,FSD50k,187,Water
+bathtub,FSD50k,10,Bathtub_(filling_or_washing)
+speech,FSD50k,158,Speech
