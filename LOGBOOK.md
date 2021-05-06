@@ -95,3 +95,11 @@ Se continuar, aumentar o grau do alerta.
 - Verificar se o silêncio existente no ficheiro é maior do que o chunk de procura, de forma a não estragar o padrão caraterístico do som.
 - Fazer o pré-processamento do áudio (raw data) detetado no microfone e só depois passá-lo ao modelo.
 - Gravam se detetarem movimento/audio.
+
+## **06/05/2021**
+
+- Enviar para openhab atividades reconhecidas pelo modelo
+   - Pegar nessa atividade guarda-la com timestamp
+   - Trabalhar essa informação (MODA?)
+- No relatório colocar TUDO: o que foi feito, o que não foi feito, o que gostaríamos de ter feito, etc.
+   - Diagramas, fluxogramas. Nada de código!
