@@ -1,6 +1,7 @@
 import tensorflow as tf
 import soundfile as sf
 import tensorflow_io as tfio
+from pydub import AudioSegment
 import io
 import csv
 from edge_device.const import MODEL_THRESHOLD, MODEL_DIFERENCE, MODEL_UNKOWN
@@ -22,9 +23,26 @@ class AudioRetrainedInference:
         self.class_names = [display_name for (class_index, mid, display_name) in csv.reader(class_map_csv)]
         self.class_names = self.class_names[1:]  # Skip CSV header
 
+    def remove_middle_silence(self, sound):
+        silence_threshold = -45.0  # dB
+        chunk_size = 100  # ms
+        sound_ms = 0  # ms
+        trimmed_sound = AudioSegment.empty()
+
+        while sound_ms < len(sound):
+            if sound[sound_ms:sound_ms + chunk_size].dBFS >= silence_threshold:
+                trimmed_sound += sound[sound_ms:sound_ms + chunk_size]
+            sound_ms += chunk_size
+
+        return trimmed_sound.set_sample_width(2)
+
     def inference(self, waveform):
         filename = 'tmp.wav'
         sf.write(filename, waveform, self.fs)
+
+        # audio = AudioSegment.from_wav(filename)
+        # audio = self.remove_middle_silence(audio)
+        # audio.export(filename, format="wav")
 
         """ read in a waveform file and convert to 16 kHz mono """
         file_contents = tf.io.read_file(filename)
