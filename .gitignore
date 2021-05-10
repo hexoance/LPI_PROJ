@@ -9,7 +9,7 @@ retrain-models/datasets/ESC-50/audio
 retrain-models/datasets/FSD50k/audio
 retrain-models/datasets/FSD50k/audio-dev
 retrain-models/datasets/FSD50k/audio-eval
-edge-device/tmp.wav
+edge_device/tmp.wav
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
