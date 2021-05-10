@@ -21,7 +21,7 @@ item_label = openhab.get_item('Input')
 item_label_audio = openhab.get_item('Input2')
 
 fs = 16000  # sample rate (Hz)
-duration = 0.96  # seconds, multiple of 0.96 (length of the sliding window)
+duration = 1.92  # seconds, multiple of 0.96 (length of the sliding window)
 samples = int(duration * fs)
 recording = np.zeros((0, 1))  # initialize recording shape
 
@@ -93,14 +93,14 @@ if __name__ == '__main__':
             cv2.imshow('Video', output_rgb)
             fps.update()
 
-            #print('[INFO] elapsed time: {:.2f}'.format(time.time() - t))
+            print('[INFO] elapsed time: {:.2f}'.format(time.time() - t))
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
     fps.stop()
-    #print('[INFO] elapsed time (total): {:.2f}'.format(fps.elapsed()))
-    #print('[INFO] approx. FPS: {:.2f}'.format(fps.fps()))
+    print('[INFO] elapsed time (total): {:.2f}'.format(fps.elapsed()))
+    print('[INFO] approx. FPS: {:.2f}'.format(fps.fps()))
 
     pool.terminate()
     video_capture.stop()

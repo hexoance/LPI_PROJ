@@ -1,33 +1,12 @@
 import numpy as np
 import tensorflow as tf
-import tensorflow_io as tfio
-import soundfile as sf
+import io
 import csv
-from pydub import AudioSegment
 
 fs = 16000  # sample rate (Hz)
-duration = 0.96  # seconds, multiple of 0.96 (length of the sliding window)
+duration = 1.92  # seconds, multiple of 0.96 (length of the sliding window)
 samples = int(duration * fs)
 recording = np.zeros((0, 1))  # initialize recording shape
-
-DATASETS_PATH = '../retrain-models/datasets/'
-# DATASETS_PATH ='D:/datasets/'
-
-datasets = ['ESC-50', 'FSD50k', 'GENERATED-SOUNDS']
-DATASET_NAME = datasets[2]
-
-classes = []
-
-def readClasses(file):
-    with open(file, newline='') as f:
-        reader = csv.reader(f)
-        iterreader = iter(reader)
-        next(iterreader)
-        for row in iterreader:
-            classes.append(row[2])
-
-
-readClasses('../models/new_yamnet/assets/yamnet_class_map.csv')
 
 
 class AudioInference:
@@ -35,28 +14,15 @@ class AudioInference:
     def __init__(self, item_label):
         self.item_label = item_label
         # Load Models
-        self.model_audio = tf.saved_model.load('../models/new_yamnet')
+        self.model_audio = tf.saved_model.load('../models/yamnet_1')
 
         # Find the name of the class with the top score when mean-aggregated across frames.
-        # class_map_path = self.model_audio.class_map_path().numpy()
-        # class_map_csv = io.StringIO(tf.io.read_file(class_map_path).numpy().decode('utf-8'))
-        # self.class_names = [display_name for (class_index, mid, display_name) in csv.reader(class_map_csv)]
-        # self.class_names = self.class_names[1:]  # Skip CSV header
+        class_map_path = self.model_audio.class_map_path().numpy()
+        class_map_csv = io.StringIO(tf.io.read_file(class_map_path).numpy().decode('utf-8'))
+        self.class_names = [display_name for (class_index, mid, display_name) in csv.reader(class_map_csv)]
+        self.class_names = self.class_names[1:]  # Skip CSV header
 
-    def remove_middle_silence(self, sound):
-        silence_threshold = -45.0  # dB
-        chunk_size = 100  # ms
-        sound_ms = 0  # ms
-        trimmed_sound = AudioSegment.empty()
-
-        while sound_ms < len(sound):
-            if sound[sound_ms:sound_ms + chunk_size].dBFS >= silence_threshold:
-                trimmed_sound += sound[sound_ms:sound_ms + chunk_size]
-            sound_ms += chunk_size
-
-        return trimmed_sound.set_sample_width(2)
-
-    def inference2(self, waveform):
+    def inference(self, waveform):
         # Reshape numpy array
         waveform.shape = (samples,)
 
@@ -75,28 +41,3 @@ class AudioInference:
         self.item_label.state = self.class_names[top5[0]]
         # plot_results(waveform, scores, log_mel_spectrogram)
         # print(class_names[scores.numpy().mean(axis=0).argmax()])  # Prints top score.
-
-    def inference(self, waveform):
-        filename = 'tmp.wav'
-        sf.write(filename, waveform, fs)
-
-        #audio = AudioSegment.from_wav(filename)
-        #audio = self.remove_middle_silence(audio)
-        #audio.export(filename, format="wav")
-
-        """ read in a waveform file and convert to 16 kHz mono """
-        file_contents = tf.io.read_file(filename)
-        wav, sample_rate = tf.audio.decode_wav(file_contents, desired_channels=1)
-        wav = tf.squeeze(wav, axis=-1)
-        sample_rate = tf.cast(sample_rate, dtype=tf.int64)
-        wav = tfio.audio.resample(wav, rate_in=sample_rate, rate_out=16000)
-
-        results = self.model_audio(wav)
-        your_top_class = tf.argmax(results)
-        your_infered_class = classes[your_top_class]
-        class_probabilities = tf.nn.softmax(results, axis=-1)
-        your_top_score = class_probabilities[your_top_class]
-        second_top_score = class_probabilities[tf.nn.top_k(results, k=2).indices.numpy()[1]]
-        #if your_top_score - second_top_score <= 0.4:
-        #    your_infered_class = "Unknown"
-        print(f'[Your model] The main sound is: {your_infered_class} ({your_top_score})')
