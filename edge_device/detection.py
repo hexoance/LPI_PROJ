@@ -11,7 +11,7 @@ from edge_device.const import MODEL_THRESHOLD, MODEL_DIFERENCE, MODEL_UNKOWN
 
 from openhab import OpenHAB
 
-base_url = 'http://192.168.1.67:8080/rest'
+base_url = 'http://localhost:8080/rest'
 openhab = OpenHAB(base_url)
 
 item_label_video = openhab.get_item('Input')
