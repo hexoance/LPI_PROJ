@@ -1,6 +1,7 @@
 import tensorflow as tf
 import soundfile as sf
 import tensorflow_io as tfio
+from tflite_runtime.interpreter import Interpreter
 from pydub import AudioSegment
 import io
 import csv
@@ -14,8 +15,12 @@ class AudioRetrainedInference:
         duration = audio_model['duration']  # seconds, ex. multiple of 0.96 for yamnet (length of the sliding window)
         self.samples = int(duration * self.fs)
 
-        # Load Models
-        self.model_audio = tf.saved_model.load('../models/' + audio_model['name'])
+        # Load Model
+        self.interpreter = Interpreter('../models-tflite/' + audio_model['name'] + '.tflite')
+        inputs = self.interpreter.get_input_details()
+        outputs = self.interpreter.get_output_details()
+        self.waveform_input_index = inputs[0]['index']
+        self.scores_output_index = outputs[0]['index']
 
         # Find the name of the class with the top score when mean-aggregated across frames.
         class_map_path = '../models/' + audio_model['name'] + '/assets/yamnet_class_map.csv'
@@ -51,7 +56,12 @@ class AudioRetrainedInference:
         sample_rate = tf.cast(sample_rate, dtype=tf.int64)
         wav = tfio.audio.resample(wav, rate_in=sample_rate, rate_out=16000)
 
-        results = self.model_audio(wav)
+        self.interpreter.resize_tensor_input(self.waveform_input_index, [len(wav)], strict=True)
+        self.interpreter.allocate_tensors()
+        self.interpreter.set_tensor(self.waveform_input_index, wav)
+        self.interpreter.invoke()
+        results = self.interpreter.get_tensor(self.scores_output_index)
+
         your_top_class = tf.argmax(results)
         your_infered_class = self.class_names[your_top_class]
         class_probabilities = tf.nn.softmax(results, axis=-1)
