@@ -1,12 +1,9 @@
 # From http://www.pyimagesearch.com/2015/12/21/increasing-webcam-fps-with-python-and-opencv/
 
-import struct
-import six
-import collections
-import cv2
 import datetime
 from threading import Thread
-from matplotlib import colors
+
+import cv2
 
 
 class FPS:

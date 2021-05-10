@@ -1,18 +1,18 @@
 # code borrowed from datitran/object_detector_app
 
-import cv2
-import time
 import argparse
 import multiprocessing
-import numpy as np
-import sounddevice as sd
-
-from audio import AudioInference
-from video import VideoInference
-from utils.app_utils import FPS, WebcamVideoStream
+import time
 from multiprocessing import Queue, Pool
 
+import cv2
+import numpy as np
+import sounddevice as sd
 from openhab import OpenHAB
+
+from audio import AudioInference
+from utils.app_utils import FPS, WebcamVideoStream
+from video import VideoInference
 
 base_url = 'http://localhost:8080/rest'
 openhab = OpenHAB(base_url)
@@ -27,7 +27,6 @@ recording = np.zeros((0, 1))  # initialize recording shape
 
 
 def worker(input_q, output_q):
-
     fps = FPS().start()
 
     audio = AudioInference(item_label_audio)

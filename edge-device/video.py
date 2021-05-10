@@ -1,7 +1,9 @@
+import os
+
+import cv2
 import numpy as np
 import tensorflow as tf
-import cv2
-import os
+
 from utils import visualization_utils as vis_util
 
 CWD_PATH = os.getcwd()
@@ -9,6 +11,7 @@ CWD_PATH = os.getcwd()
 # Path to frozen detection graph. This is the actual model that is used for the classification.
 PATH_TO_CKPT = os.path.join(CWD_PATH, '../models/charades/frozen_model.pb')
 PREDICTION_DECAY = 0.6  # [0,1) How slowly to update the predictions (0.99 is slowest, 0 is instant)
+
 
 class VideoInference:
 
@@ -90,7 +93,7 @@ class VideoInference:
         classes = np.argsort(accumulator)[::-1][:3]
         boxes = np.array([[0.1, 0, 0.1, 0], [0.2, 0, 0.2, 0], [0.3, 0, 0.3, 0]])
 
-        #print('[VIDEO]:', self.category_classes[classes[0]])
+        # print('[VIDEO]:', self.category_classes[classes[0]])
         self.item_label.state = str(self.category_classes[classes[0]]['name'])
 
         vis_util.visualize_boxes_and_labels_on_image_array(
