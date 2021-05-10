@@ -37,14 +37,14 @@ def data_processing_worker(in_q, out_q):
             out_q.put(new_item)
 
 
-def inference_worker(in_q, out_q):
+def inference_worker(in_q, out_q, video_q):
     local_models = {}
     for audio_model in models['audio']:
         model = audio_model['model'](audio_model)
         local_models[audio_model['name']] = model
 
     for video_model in models['video']:
-        model = video_model['model'](output_q)
+        model = video_model['model'](video_q)
         local_models[video_model['name']] = model
 
     while True:
@@ -92,7 +92,7 @@ if __name__ == '__main__':
     prediction_q = Queue(maxsize=args.queue_size)
 
     processing_pool = Pool(2, data_processing_worker, (data_captured_q, data_processed_q))
-    inference_pool = Pool(args.num_workers, inference_worker, (data_processed_q, prediction_q))
+    inference_pool = Pool(args.num_workers, inference_worker, (data_processed_q, prediction_q, output_q))
     network_pool = Pool(2, network_worker, (prediction_q,))
 
     video_capture = WebcamVideoStream(src=args.video_source,
