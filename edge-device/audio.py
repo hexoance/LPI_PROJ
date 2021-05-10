@@ -1,8 +1,7 @@
-import csv
-import io
-
 import numpy as np
 import tensorflow as tf
+import io
+import csv
 
 fs = 16000  # sample rate (Hz)
 duration = 1.92  # seconds, multiple of 0.96 (length of the sliding window)
