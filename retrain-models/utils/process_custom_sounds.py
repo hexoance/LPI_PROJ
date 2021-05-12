@@ -29,6 +29,10 @@ class ProcessCustomSounds:
         return mappings
 
     @staticmethod
+    def getname():
+        return DATASET_NAME
+
+    @staticmethod
     def read_vocabulary(dataset_path):
         vocabulary = {}
         vocabulary_file = dataset_path + 'vocabulary.csv'
@@ -38,7 +42,3 @@ class ProcessCustomSounds:
                 vocabulary[row[0]] = row[1]
 
         return vocabulary
-
-    @staticmethod
-    def filter(datasets_path, mappings):
-        return mappings

@@ -23,7 +23,7 @@ DATASETS_PATH = args.datasets_path
 datasets = [
     ProcessCustomSounds,
     ProcessFSD50k,
-    #'ESC-50',
+    # 'ESC-50',
 ]
 
 GENERATED_PATH = DATASETS_PATH + 'GENERATED-SOUNDS/'
@@ -55,7 +55,8 @@ def read_vocabulary_mappings(file, classes):
             category_id = row[2]
             matching_category_name = row[3]
             if class_name in classes:
-                classes[class_name]['datasets'][dataset_name] = {'id': category_id, 'matching_category': matching_category_name}
+                classes[class_name]['datasets'][dataset_name] = {'id': category_id,
+                                                                 'matching_category': matching_category_name}
     print(classes)
     return classes
 
@@ -69,17 +70,27 @@ def read_vocabulary(file):
     return vocabulary_read
 
 
-def sound_filter(dataset_path, maps):
-    filtered_files = {}
-    with open(dataset_path + "sound_filter.csv", newline='') as f:
+def filter(mappings, dataset_name):
+    filters_file = 'exclude_files_filter.csv'
+
+    unwanted_files = []
+    with open(filters_file, newline='') as f:
         reader = csv.reader(f)
         for row in reader:
-            filtered_files[row[0]] = row
-    filtered_maps = []
-    for file in maps:
-        if file[0].split("/")[-1] in filtered_files:
-            filtered_maps.append(file)
-    return filtered_maps
+            if dataset_name == row[1]:
+                unwanted_files.append(row[0])
+
+    for category in mappings:
+        maps = mappings[category]['mappings']
+        new_maps = []
+        for mapping in maps:
+            if mapping[0].split('/')[-1] not in unwanted_files:
+                new_maps.append(mapping)
+
+        mappings[category]['mappings'] = new_maps
+        mappings[category]['count'] = len(new_maps)
+
+    return mappings
 
 
 def balance_wav_files(maps):
@@ -173,7 +184,8 @@ if __name__ == '__main__':
     for dataset in datasets:
         mappings = dataset.extract_mappings(DATASETS_PATH, mappings)
     for dataset in datasets:
-        mappings = dataset.filter(DATASETS_PATH, mappings)
+        mappings = filter(mappings, dataset.getname())
+
     mappings = balance_wav_files(mappings)
     delete_all_files_from_folder(GENERATED_PATH + "audio")
     copy_matching_files(mappings)

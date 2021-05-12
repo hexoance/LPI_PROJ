@@ -14,6 +14,10 @@ class ProcessFSD50k:
         return mappings
 
     @staticmethod
+    def getname():
+        return DATASET_NAME
+
+    @staticmethod
     def extract_custom(dataset_path, type, mappings):
         mappings_file = dataset_path + type + '.csv'
         audio_folder = dataset_path + 'audio-' + type
@@ -33,25 +37,3 @@ class ProcessFSD50k:
                                      category])
         return mappings
 
-    @staticmethod
-    def filter(datasets_path, mappings):
-        filters_file = datasets_path + DATASET_NAME + '/exclude_files_filter.csv'
-
-        unwanted_files = []
-        with open(filters_file, newline='') as f:
-            reader = csv.reader(f)
-            for row in reader:
-                if DATASET_NAME == row[1]:
-                    unwanted_files.append(row[0])
-
-        for category in mappings:
-            maps = mappings[category]['mappings']
-            new_maps = []
-            for mapping in maps:
-                if mapping[0].split('/')[-1] not in unwanted_files:
-                    new_maps.append(mapping)
-
-            mappings[category]['mappings'] = new_maps
-            mappings[category]['count'] = len(new_maps)
-
-        return mappings
