@@ -14,8 +14,7 @@ from openhab import OpenHAB
 base_url = 'http://localhost:8080/rest'
 openhab = OpenHAB(base_url)
 
-item_label_video = openhab.get_item('Input')
-item_label_audio = openhab.get_item('Input2')
+item_label_data = openhab.get_item('EdgeDeviceData')
 
 models = {
     'audio': [
@@ -29,7 +28,6 @@ models = {
 
 
 def data_processing_worker(in_q, out_q):
-
     while True:
         item = in_q.get()
         for model in models[item['type']]:
@@ -51,22 +49,23 @@ def inference_worker(in_q, out_q, video_q):
         item = in_q.get()
         prediction = local_models[item['name']].inference(item['data'])
         if prediction != MODEL_UNKOWN:
-            out_q.put({'prediction': prediction, 'type': item['type']})
+            out_q.put({'prediction': prediction, 'type': item['type'], 'timestamp': str(datetime.datetime.now())})
 
 
 def network_worker(in_q):
-
     while True:
         item = in_q.get()
-
+        item_label_data.state = str(item)
+        '''
         label = None
         if item['type'] == 'video':
             label = item_label_video
         elif item['type'] == 'audio':
             label = item_label_audio
-
+        
         if label is not None:
             label.state = item['prediction']
+        '''
 
 
 if __name__ == '__main__':
@@ -83,10 +82,8 @@ if __name__ == '__main__':
                         default=5, help='Size of the queue.')
     args = parser.parse_args()
 
-
-
-    #logger = multiprocessing.log_to_stderr()
-    #logger.setLevel(multiprocessing.SUBDEBUG)
+    # logger = multiprocessing.log_to_stderr()
+    # logger.setLevel(multiprocessing.SUBDEBUG)
 
     output_q = Queue(maxsize=args.queue_size)
     data_captured_q = Queue(maxsize=args.queue_size)

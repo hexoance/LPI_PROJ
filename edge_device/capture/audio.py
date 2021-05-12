@@ -25,7 +25,7 @@ class MicrophoneAudioStream:
         recording = np.concatenate((recording, indata), axis=0)
 
         if recording.size >= samples:
-            item = {'type': 'audio', 'data': recording[:samples]}
+            item = {"type": "audio", 'data': recording[:samples]}
             self.in_q.put(item)
             recording = recording[samples:]
 

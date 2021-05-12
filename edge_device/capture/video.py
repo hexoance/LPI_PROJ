@@ -40,7 +40,7 @@ class WebcamVideoStream:
             # otherwise, read the next frame from the stream
             _, frame = self.stream.read()
 
-            item = {'type': 'video', 'data': frame}
+            item = {"type": "video", 'data': frame}
             self.in_q.put(item)
 
             t = time.time()
