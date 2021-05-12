@@ -29,35 +29,29 @@ class ProcessFSD50k:
                             if category == mappings[class_maps]['datasets'][dataset]['matching_category']:
                                 mappings[class_maps]['count'] += 1
                                 mappings[class_maps]['mappings'].append(
-                                    [audio_folder + "/" + row[0] + ".wav", str(0), mappings[class_maps]['id'], category])
+                                    [audio_folder + "/" + row[0] + ".wav", str(0), mappings[class_maps]['id'],
+                                     category])
         return mappings
 
     @staticmethod
     def filter(datasets_path, mappings):
-        filter_include_file = datasets_path + DATASET_NAME + '/filter_include.csv'
-        filter_mappings_file = datasets_path + DATASET_NAME + '/filter_mappings.csv'
+        filters_file = datasets_path + DATASET_NAME + '/exclude_files_filter.csv'
 
-        classes = []
-        with open(filter_include_file, newline='') as f:
+        unwanted_files = []
+        with open(filters_file, newline='') as f:
             reader = csv.reader(f)
             for row in reader:
-                classes.append(row[0])
+                if DATASET_NAME == row[1]:
+                    unwanted_files.append(row[0])
 
         for category in mappings:
             maps = mappings[category]['mappings']
             new_maps = []
-
             for mapping in maps:
-                if mapping[3] in classes:
-                    with open(filter_mappings_file, newline='') as f:
-                        reader = csv.reader(f)
-                        for row in reader:
-                            if row[0] == mapping[0].split('/')[-1]:
-                                new_maps.append(mapping)
-                else:
+                if mapping[0].split('/')[-1] not in unwanted_files:
                     new_maps.append(mapping)
+
             mappings[category]['mappings'] = new_maps
             mappings[category]['count'] = len(new_maps)
 
-        print(mappings)
         return mappings

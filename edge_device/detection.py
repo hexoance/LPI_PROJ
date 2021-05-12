@@ -83,6 +83,8 @@ if __name__ == '__main__':
                         default=5, help='Size of the queue.')
     args = parser.parse_args()
 
+
+
     #logger = multiprocessing.log_to_stderr()
     #logger.setLevel(multiprocessing.SUBDEBUG)
 

@@ -1,3 +1,4 @@
+import argparse
 import os
 import csv
 from pydub import AudioSegment
@@ -13,8 +14,11 @@ TEST_DS_PERCENTAGE = 0.2
 if TRAIN_DS_PERCENTAGE + VAL_DS_PERCENTAGE + TEST_DS_PERCENTAGE != 1:
     raise Exception('Train/Val/Test split sum must be equal to 100%')
 
-DATASETS_PATH = './datasets/'
-# DATASETS_PATH = 'D:/datasets/'
+parser = argparse.ArgumentParser()
+parser.add_argument('-d', '--dataset', dest='datasets_path',
+                    default='./datasets/', help='Invalid path to datasets!')
+args = parser.parse_args()
+DATASETS_PATH = args.datasets_path
 
 datasets = [
     ProcessCustomSounds,

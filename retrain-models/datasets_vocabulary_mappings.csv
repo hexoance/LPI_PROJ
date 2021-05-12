@@ -7,7 +7,7 @@ water,FSD50k,187,Water
 bathtub,FSD50k,10,Bathtub_(filling_or_washing)
 speech,FSD50k,158,Speech
 dishes,FDS50k,58,Dishes_and_pots_and_pans
-frying,FDS50k,83,Frying_(food)
+frying_(food),FDS50k,83,Frying_(food)
 microwave,FDS50k,117,Microwave_oven
 splash_and_splatter,FDS50k,160,Splash_and_splatter
 toilet_flush,FSD50k,175,Toilet_flush

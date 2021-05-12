@@ -13,6 +13,7 @@ like laughter, barking, or a siren.
 """
 import csv
 import os
+import argparse
 
 import pandas as pd
 import tensorflow as tf
@@ -88,14 +89,19 @@ Finally, in order to find the top-scored class at the clip-level, we take the ma
 all the audio files are in `./datasets/AUDIO-GENERATED/audio/` """
 
 saved_model_path = '../models/new_yamnet'
+saved_model_name = "new_yamnet"
+tflite_models_dir = "../models-tflite"
 dataset_names = ['GENERATED-SOUNDS', 'ESC-50', 'FSD50k']
 DATASET_NAME = dataset_names[0]
 fold_train = 1
 fold_val = 2
 fold_eval = 3
 
-DATASETS_PATH = './datasets/'
-# DATASETS_PATH ='D:/datasets/'
+parser = argparse.ArgumentParser()
+parser.add_argument('-d', '--dataset', dest='datasets_path',
+                    default='./datasets/', help='Invalid path to datasets!')
+args = parser.parse_args()
+DATASETS_PATH = args.datasets_path
 
 files_csv = DATASETS_PATH + DATASET_NAME + '/mappings.csv'
 base_data_path = DATASETS_PATH + DATASET_NAME + '/audio/'
@@ -282,5 +288,23 @@ def save_classes_to_csv():
         for class_name in my_classes:
             writer.writerow([0, 0, class_name])
 
-
+print(f"\nSaving '{saved_model_name}' classes to .csv file...", end='')
 save_classes_to_csv()
+print(" DONE")
+
+"""
+Convert Model to TFLite
+"""
+print(f"\nConverting '{saved_model_name}' to TFLite...", end='')
+converter = tf.lite.TFLiteConverter.from_saved_model(saved_model_path)  # path to the SavedModel directory
+converter.target_spec.supported_ops = [
+    tf.lite.OpsSet.TFLITE_BUILTINS,  # enable TensorFlow Lite ops.
+    tf.lite.OpsSet.SELECT_TF_OPS  # enable TensorFlow ops.
+]
+tflite_model = converter.convert()
+
+# Save the model.
+with open(tflite_models_dir + "/" + saved_model_name + ".tflite", 'wb') as f:
+    f.write(tflite_model)
+
+print(" DONE")
