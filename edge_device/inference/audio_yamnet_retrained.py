@@ -1,9 +1,6 @@
-import tensorflow as tf
-import soundfile as sf
-import tensorflow_io as tfio
+import numpy as np
 from tflite_runtime.interpreter import Interpreter
 from pydub import AudioSegment
-import io
 import csv
 from edge_device.const import MODEL_THRESHOLD, MODEL_DIFERENCE, MODEL_UNKOWN
 
@@ -24,8 +21,9 @@ class AudioRetrainedInference:
 
         # Find the name of the class with the top score when mean-aggregated across frames.
         class_map_path = '../models/' + audio_model['name'] + '/assets/yamnet_class_map.csv'
-        class_map_csv = io.StringIO(tf.io.read_file(class_map_path).numpy().decode('utf-8'))
+        class_map_csv = open(class_map_path)  # open the classes file
         self.class_names = [display_name for (class_index, mid, display_name) in csv.reader(class_map_csv)]
+        class_map_csv.close()  # close the classes file
         self.class_names = self.class_names[1:]  # Skip CSV header
 
     def remove_middle_silence(self, sound):
@@ -42,34 +40,27 @@ class AudioRetrainedInference:
         return trimmed_sound.set_sample_width(2)
 
     def inference(self, waveform):
-        filename = 'tmp.wav'
-        sf.write(filename, waveform, self.fs)
+        waveform.shape = (self.samples,)
+        waveform = waveform.astype('float32')
 
         # audio = AudioSegment.from_wav(filename)
         # audio = self.remove_middle_silence(audio)
         # audio.export(filename, format="wav")
 
-        """ read in a waveform file and convert to 16 kHz mono """
-        file_contents = tf.io.read_file(filename)
-        wav, sample_rate = tf.audio.decode_wav(file_contents, desired_channels=1)
-        wav = tf.squeeze(wav, axis=-1)
-        sample_rate = tf.cast(sample_rate, dtype=tf.int64)
-        wav = tfio.audio.resample(wav, rate_in=sample_rate, rate_out=16000)
-
-        self.interpreter.resize_tensor_input(self.waveform_input_index, [len(wav)], strict=True)
+        self.interpreter.resize_tensor_input(self.waveform_input_index, [len(waveform)], strict=True)
         self.interpreter.allocate_tensors()
-        self.interpreter.set_tensor(self.waveform_input_index, wav)
+        self.interpreter.set_tensor(self.waveform_input_index, waveform)
         self.interpreter.invoke()
         results = self.interpreter.get_tensor(self.scores_output_index)
 
-        your_top_class = tf.argmax(results)
+        your_top_class = np.argmax(results)  # using tensorflow lib, not applicable on RPI
         your_infered_class = self.class_names[your_top_class]
-        class_probabilities = tf.nn.softmax(results, axis=-1)
 
+        # computes softmax activations, equivalent to tf.nn.softmax(results, axis=-1)
+        class_probabilities = np.exp(results) / np.sum(np.exp(results), axis=-1)
         your_top_score = class_probabilities[your_top_class]
-        second_top_score = class_probabilities[tf.nn.top_k(results, k=2).indices.numpy()[1]]
 
-        if your_top_score - second_top_score <= MODEL_DIFERENCE or your_top_score < MODEL_THRESHOLD:
+        if your_top_score < MODEL_THRESHOLD:
             your_infered_class = MODEL_UNKOWN
 
         print(f'[AUDIO - DomesticSounds] {your_infered_class} ({your_top_score})')
