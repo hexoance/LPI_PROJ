@@ -2,7 +2,6 @@ import numpy as np
 import tensorflow as tf
 import cv2
 import os
-from edge_device.utils import visualization_utils as vis_util
 
 CWD_PATH = os.getcwd()
 
