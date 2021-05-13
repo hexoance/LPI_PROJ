@@ -103,3 +103,14 @@ Se continuar, aumentar o grau do alerta.
    - Trabalhar essa informação (MODA?)
 - No relatório colocar TUDO: o que foi feito, o que não foi feito, o que gostaríamos de ter feito, etc.
    - Diagramas, fluxogramas. Nada de código!
+
+## **13/05/2021**
+
+- Matriz de confusão multiclasse:
+   - Qual o erro sistemático que o código está a ter. 
+   - [Documentação TensorFlow](https://www.tensorflow.org/api_docs/python/tf/math/confusion_matrix)
+   - [Exemplo GeeksForGeeks](https://www.geeksforgeeks.org/python-tensorflow-math-confusion_matrix/)
+- Esclarecimento de dúvidas relativamente à troca de mensagens entre o Edge Device, openHAB e Brain.
+- [GitHub Gist - Code Snippets](https://gist.github.com/)
+- OpenCV trocar FPS usar função waitKey().
+- Relatório: começar pela estrutura, headings e subheadings, depois inserir esboços do que se vai falar
