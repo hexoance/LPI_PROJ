@@ -35,14 +35,14 @@ def data_processing_worker(in_q, out_q):
             out_q.put(new_item)
 
 
-def inference_worker(in_q, out_q, video_q):
+def inference_worker(in_q, out_q):
     local_models = {}
     for audio_model in models['audio']:
         model = audio_model['model'](audio_model)
         local_models[audio_model['name']] = model
 
     for video_model in models['video']:
-        model = video_model['model'](video_q)
+        model = video_model['model']()
         local_models[video_model['name']] = model
 
     while True:
@@ -56,16 +56,6 @@ def network_worker(in_q):
     while True:
         item = in_q.get()
         item_label_data.state = str(item)
-        '''
-        label = None
-        if item['type'] == 'video':
-            label = item_label_video
-        elif item['type'] == 'audio':
-            label = item_label_audio
-        
-        if label is not None:
-            label.state = item['prediction']
-        '''
 
 
 if __name__ == '__main__':
@@ -85,20 +75,18 @@ if __name__ == '__main__':
     # logger = multiprocessing.log_to_stderr()
     # logger.setLevel(multiprocessing.SUBDEBUG)
 
-    output_q = Queue(maxsize=args.queue_size)
     data_captured_q = Queue(maxsize=args.queue_size)
     data_processed_q = Queue(maxsize=args.queue_size)
     prediction_q = Queue(maxsize=args.queue_size)
 
     processing_pool = Pool(2, data_processing_worker, (data_captured_q, data_processed_q))
-    inference_pool = Pool(args.num_workers, inference_worker, (data_processed_q, prediction_q, output_q))
+    inference_pool = Pool(args.num_workers, inference_worker, (data_processed_q, prediction_q))
     network_pool = Pool(2, network_worker, (prediction_q,))
 
     video_capture = WebcamVideoStream(src=args.video_source,
                                       width=args.width,
                                       height=args.height,
-                                      in_q=data_captured_q,
-                                      out_q=output_q)
+                                      in_q=data_captured_q)
 
     if video_capture.found:
         video_capture.start()

@@ -4,7 +4,7 @@ from threading import Thread
 
 
 class WebcamVideoStream:
-    def __init__(self, src, width, height, in_q, out_q):
+    def __init__(self, src, width, height, in_q):
         # initialize the video camera stream and read the first frame from the stream
         self.stream = cv2.VideoCapture(src)
         self.found = True
@@ -19,7 +19,6 @@ class WebcamVideoStream:
         _, _ = self.stream.read()
 
         self.in_q = in_q
-        self.out_q = out_q
 
         # initialize the variable used to indicate if the thread should be stopped
         self.running = False
@@ -45,23 +44,15 @@ class WebcamVideoStream:
 
             t = time.time()
 
-            vis_frame = self.out_q.get()
-            if vis_frame == 'STOP':
-                break
+            # cv2.imshow('Video', cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
 
-            output_rgb = cv2.cvtColor(vis_frame, cv2.COLOR_RGB2BGR)
-            cv2.imshow('Video', output_rgb)
+            # print('[INFO] elapsed time: {:.2f}'.format(time.time() - t))
 
-            #print('[INFO] elapsed time: {:.2f}'.format(time.time() - t))
-
-            if cv2.waitKey(1) & 0xFF == ord('q'):
+            if cv2.waitKey(500) & 0xFF == ord('q'):
                 break
 
     def stop(self):
         # indicate that the thread should be stopped
         self.running = False
-        self.out_q.put("STOP")
         self.thread.join()
         cv2.destroyAllWindows()
-
-

@@ -13,8 +13,7 @@ PREDICTION_DECAY = 0.6  # [0,1) How slowly to update the predictions (0.99 is sl
 
 class VideoInference:
 
-    def __init__(self, output_q):
-        self.output_q = output_q
+    def __init__(self):
         self.accumulator = np.zeros(157, )
 
         # Load a (frozen) Tensorflow model into memory.
@@ -87,23 +86,8 @@ class VideoInference:
         classes = np.exp(np.squeeze(classes))
         classes = classes / np.sum(classes)
         accumulator[:] = PREDICTION_DECAY * accumulator[:] + (1 - PREDICTION_DECAY) * classes
-        scores = np.sort(accumulator)[::-1][:3]
         classes = np.argsort(accumulator)[::-1][:3]
-        boxes = np.array([[0.1, 0, 0.1, 0], [0.2, 0, 0.2, 0], [0.3, 0, 0.3, 0]])
 
-        #print('[VIDEO]:', self.category_classes[classes[0]])
-
-        vis_util.visualize_boxes_and_labels_on_image_array(
-            image_np,
-            boxes,
-            classes.astype(np.int32),
-            scores,
-            self.category_classes,
-            use_normalized_coordinates=True,
-            line_thickness=8,
-            min_score_thresh=0,
-            display_score=False)
-
-        self.output_q.put(image_np)
+        print('[VIDEO]:', self.category_classes[classes[0]])
 
         return str(self.category_classes[classes[0]]['name'])
