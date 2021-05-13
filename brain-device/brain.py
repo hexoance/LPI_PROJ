@@ -14,6 +14,9 @@ item_label_brain = openhab.get_item('BrainDevice')
 eventsAudio = []
 eventsVideo = []
 MAX_EVENTS = 5
+last_event = ""
+WINDOWSIZE_SECONDS = 10
+
 
 @app.route('/test')
 def action():
@@ -35,6 +38,7 @@ def getOpenHabLabel():
     handleEvents(json)
     return json
 
+
 def mostFrequentEvent(events):
     if len(events) < MAX_EVENTS:
         return
@@ -45,22 +49,36 @@ def mostFrequentEvent(events):
             moda[event['prediction']] = 1
         else:
             moda[event['prediction']] += 1
-    
+
     mostFrequent = max(moda, key=moda.get)
-    print(moda)
-    print(mostFrequent)
+    print("Moda: ", moda)
     events.clear()
     return mostFrequent
 
 
-def handleEvents(lastEvent):
-    #timestamp = datetime.datetime.strptime(lastEvent['timestamp'], "%Y-%m-%d %H:%M:%S.%f")
+def handleEvents(current_event):
+    global last_event
+    timestamp = convertTimestamps(current_event['timestamp'])
 
-    mostFrequentAudio= mostFrequentEvent(eventsAudio)
-    mostFrequentVideo= mostFrequentEvent(eventsVideo)
-    
-    if mostFrequentAudio is not None:
-        item_label_brain.state = mostFrequentAudio
+    mostFrequentAudio = mostFrequentEvent(eventsAudio)
+    # mostFrequentVideo = mostFrequentEvent(eventsVideo)
+
+    if mostFrequentAudio is None:
+        return
+
+    item_label_brain.state = mostFrequentAudio
+
+    if last_event != "" and (
+            convertTimestamps(last_event['timestamp']) + datetime.timedelta(seconds=WINDOWSIZE_SECONDS)) < timestamp:
+        print("CLASS:", last_event['prediction'], "LASTED", WINDOWSIZE_SECONDS, "SECONDS", current_event['timestamp'])
+        last_event['timestamp'] = current_event['timestamp']
+
+    if last_event == "" or last_event['prediction'] != mostFrequentAudio:
+        last_event = {"prediction": mostFrequentAudio, "timestamp": current_event['timestamp']}
+
+
+def convertTimestamps(timestamp_str):
+    return datetime.datetime.strptime(timestamp_str, "%Y-%m-%d %H:%M:%S.%f")
 
 
 if __name__ == '__main__':

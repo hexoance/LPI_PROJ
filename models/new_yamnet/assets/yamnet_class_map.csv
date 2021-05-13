@@ -1,6 +1,4 @@
 index,mid,display_name
-0,0,dishes
-0,0,frying_(food)
-0,0,toilet_flush
-0,0,doorbell
-0,0,silence
+0,0,scissors
+0,0,knock
+0,0,speech
