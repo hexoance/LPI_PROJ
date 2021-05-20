@@ -4,7 +4,6 @@ import sounddevice as sd
 fs = 16000  # sample rate (Hz)
 duration = 0.96  # seconds, multiple of 0.96 (length of the sliding window)
 samples = int(duration * fs)
-recording = np.zeros((0, 1))  # initialize recording shape
 
 
 class MicrophoneAudioStream:
@@ -12,6 +11,7 @@ class MicrophoneAudioStream:
         # initialize the audio input stream
         self.stream = sd.InputStream(samplerate=fs, channels=1, callback=self.update)
         self.in_q = in_q
+        self.recording = np.zeros((0, 1))
 
     def start(self):
         # start the stream to read data from the microphone
@@ -20,14 +20,12 @@ class MicrophoneAudioStream:
         return self
 
     def update(self, indata, frames, time, status):
-        global recording
+        self.recording = np.concatenate((self.recording, indata), axis=0)
 
-        recording = np.concatenate((recording, indata), axis=0)
-
-        if recording.size >= samples:
-            item = {"type": "audio", 'data': recording[:samples]}
+        if self.recording.size >= samples:
+            item = {"type": "audio", 'data': self.recording[:samples]}
             self.in_q.put(item)
-            recording = recording[samples:]
+            self.recording = self.recording[samples:]
 
     def stop(self):
         self.stream.stop()

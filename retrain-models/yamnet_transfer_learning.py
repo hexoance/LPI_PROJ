@@ -88,9 +88,9 @@ Finally, in order to find the top-scored class at the clip-level, we take the ma
 """ The metadata for each file is specified in the csv file at `./datasets/AUDIO-GENERATED/mappings.csv` and 
 all the audio files are in `./datasets/AUDIO-GENERATED/audio/` """
 
-saved_model_path = '../models/new_yamnet'
-saved_model_name = "new_yamnet"
-tflite_models_dir = "../models-tflite"
+saved_model_path = '../models/yamnet_retrained'
+saved_model_name = "yamnet_retrained"
+tflite_models_dir = "../edge_device/models"
 dataset_names = ['GENERATED-SOUNDS', 'ESC-50', 'FSD50k']
 DATASET_NAME = dataset_names[0]
 fold_train = 1
@@ -281,21 +281,22 @@ your_top_score = class_probabilities[your_top_class]
 print(f'[Your model] The main sound is: {your_infered_class} ({your_top_score})')
 
 
-def save_classes_to_csv():
-    with open(saved_model_path + '/assets/yamnet_class_map.csv', 'w', newline='') as file:
+def save_classes_to_csv(file):
+    with open(file, 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(["index", "mid", "display_name"])
         for class_name in my_classes:
             writer.writerow([0, 0, class_name])
 
-print(f"\nSaving '{saved_model_name}' classes to .csv file...", end='')
-save_classes_to_csv()
-print(" DONE")
+
+print(f"\nSaving '{saved_model_name}' classes to .csv file...")
+save_classes_to_csv(saved_model_path + '/assets/yamnet_class_map.csv')
+save_classes_to_csv(tflite_models_dir + "/" + saved_model_name + '_class_map.csv')
 
 """
 Convert Model to TFLite
 """
-print(f"\nConverting '{saved_model_name}' to TFLite...", end='')
+print(f"\nConverting '{saved_model_name}' to TFLite...")
 converter = tf.lite.TFLiteConverter.from_saved_model(saved_model_path)  # path to the SavedModel directory
 converter.target_spec.supported_ops = [
     tf.lite.OpsSet.TFLITE_BUILTINS,  # enable TensorFlow Lite ops.
@@ -306,5 +307,3 @@ tflite_model = converter.convert()
 # Save the model.
 with open(tflite_models_dir + "/" + saved_model_name + ".tflite", 'wb') as f:
     f.write(tflite_model)
-
-print(" DONE")
