@@ -114,3 +114,10 @@ Se continuar, aumentar o grau do alerta.
 - [GitHub Gist - Code Snippets](https://gist.github.com/)
 - OpenCV trocar FPS usar função waitKey().
 - Relatório: começar pela estrutura, headings e subheadings, depois inserir esboços do que se vai falar
+
+
+## **20/05/2021**
+
+- Matriz de Confusão deve ser feita apenas para o _validation set_.
+- No relatório, abordar o tema da captação espacial do _array_ de microfones.
+- Documentar testes de ligação entre o openHAB e o _Brain Device_.
