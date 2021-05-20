@@ -94,6 +94,7 @@ saved_model_name = "yamnet_retrained"
 tflite_models_dir = "../edge_device/models"
 dataset_names = ['GENERATED-SOUNDS', 'ESC-50', 'FSD50k']
 DATASET_NAME = dataset_names[0]
+EPOCHS_NUM = 20
 fold_train = 1
 fold_val = 2
 fold_eval = 3
@@ -221,7 +222,7 @@ my_model.compile(
 callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=3, restore_best_weights=True)
 
 # history = my_model.fit(train_ds, epochs=50, validation_data=val_ds, callbacks=callback)
-history = my_model.fit(train_ds, epochs=20, callbacks=callback)
+history = my_model.fit(train_ds, epochs=EPOCHS_NUM, callbacks=callback)
 
 def plot_accuracy_loss(history):
     # summarize history for accuracy-loss oscilation
@@ -230,6 +231,7 @@ def plot_accuracy_loss(history):
     plt.title('Model Accuracy - Loss')
     plt.ylabel(' ')
     plt.xlabel('epoch')
+    plt.xlim([0, EPOCHS_NUM])
     plt.legend(['accuracy', 'loss'], loc='best')
     plt.savefig('../assets/model_imgs/retraining_epoch_progress.png')
     plt.show()
@@ -279,8 +281,22 @@ filename = test_pd.sample(1)['filename'].item()
 print('Predicting the sound in -> ' + filename)
 waveform = load_wav_16k_mono(filename)
 
+def plot_waveform(waveform,spectrogram,filename):
+    # Plot the waveform.
+    plt.title("Waveform - " + filename)
+    plt.subplot(2, 1, 1)
+    plt.plot(waveform)
+    plt.xlim([0, len(waveform)])
+
+    # Plot the log-mel spectrogram (returned by the model).
+    plt.subplot(2, 1, 2)
+    plt.imshow(spectrogram.numpy().T, aspect='auto', interpolation='nearest', origin='lower')
+    plt.savefig('../assets/model_imgs/waveform.png')
+
+
 # Run the model, check the output.
-scores, _, _ = yamnet_model(waveform)
+scores, _, spectrogram = yamnet_model(waveform)
+
 class_scores = tf.reduce_mean(scores, axis=0)
 top_class = tf.argmax(class_scores)
 infered_class = class_names[top_class]
@@ -294,6 +310,9 @@ class_probabilities = tf.nn.softmax(reloaded_results, axis=-1)
 your_top_score = class_probabilities[your_top_class]
 print(f'[Your model] The main sound is: {your_infered_class} ({your_top_score})')
 
+
+
+plot_waveform(waveform,spectrogram, filename)
 
 def save_classes_to_csv(file):
     with open(file, 'w', newline='') as file:
