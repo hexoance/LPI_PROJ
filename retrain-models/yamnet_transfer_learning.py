@@ -19,6 +19,7 @@ import pandas as pd
 import tensorflow as tf
 import tensorflow_hub as hub
 import tensorflow_io as tfio
+from matplotlib import pyplot as plt
 
 """## About YAMNet
 
@@ -222,6 +223,19 @@ callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=3, restore_
 # history = my_model.fit(train_ds, epochs=50, validation_data=val_ds, callbacks=callback)
 history = my_model.fit(train_ds, epochs=20, callbacks=callback)
 
+def plot_accuracy_loss(history):
+    # summarize history for accuracy-loss oscilation
+    plt.plot(history.history['accuracy'])
+    plt.plot(history.history['loss'])
+    plt.title('Model Accuracy - Loss')
+    plt.ylabel(' ')
+    plt.xlabel('epoch')
+    plt.legend(['accuracy', 'loss'], loc='best')
+    plt.savefig('../assets/model_imgs/retraining_epoch_progress.png')
+    plt.show()
+
+
+plot_accuracy_loss(history)
 """ Lets run the evaluate method on the test data just to be sure there's no overfitting. """
 loss, accuracy = my_model.evaluate(test_ds)
 print("Loss: ", loss)
