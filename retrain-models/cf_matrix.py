@@ -105,7 +105,7 @@ def plot_confusion_matrix(cm, class_names):
 
 
 class_names = read_classes('classes_to_retrain.csv')
-expected, predicted = runModelonValidation(DATASETS_PATH + '/GENERATED-SOUNDS')
+expected, predicted = runModelonValidation(DATASETS_PATH + 'GENERATED-SOUNDS')
 confusion_matrix = tf.math.confusion_matrix(expected, predicted)
 figure = plot_confusion_matrix(confusion_matrix.numpy(), class_names)
 

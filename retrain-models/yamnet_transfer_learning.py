@@ -53,8 +53,10 @@ Loading a model from TensorFlow Hub is straightforward: choose the model, copy i
 Note: to read the documentation of the model, use the model url in the browser.
 """
 
-yamnet_model_handle = 'https://tfhub.dev/google/yamnet/1'
-yamnet_model = hub.load(yamnet_model_handle)
+#yamnet_model_handle = 'https://tfhub.dev/google/yamnet/1'
+#yamnet_model = hub.load(yamnet_model_handle)
+yamnet_model_handle = '../models/tf2'
+yamnet_model = tf.saved_model.load(yamnet_model_handle)
 
 """ Function to load the audio files. Will also be used later when working with the training data. Note: The returned 
 `wav_data` from `load_wav_16k_mono` is already normalized to values in `[-1.0, 1.0]`.
@@ -283,11 +285,10 @@ waveform = load_wav_16k_mono(filename)
 
 def plot_waveform(waveform,spectrogram,filename):
     # Plot the waveform.
-    plt.title("Waveform - " + filename)
     plt.subplot(2, 1, 1)
     plt.plot(waveform)
     plt.xlim([0, len(waveform)])
-
+    plt.suptitle("Waveform - '" + DATASET_NAME+'/audio/'+filename.split('/')[-1]+"'")
     # Plot the log-mel spectrogram (returned by the model).
     plt.subplot(2, 1, 2)
     plt.imshow(spectrogram.numpy().T, aspect='auto', interpolation='nearest', origin='lower')
@@ -333,7 +334,7 @@ print(f"\nConverting '{saved_model_name}' to TFLite...")
 converter = tf.lite.TFLiteConverter.from_saved_model(saved_model_path)  # path to the SavedModel directory
 converter.target_spec.supported_ops = [
     tf.lite.OpsSet.TFLITE_BUILTINS,  # enable TensorFlow Lite ops.
-    tf.lite.OpsSet.SELECT_TF_OPS  # enable TensorFlow ops.
+    #tf.lite.OpsSet.SELECT_TF_OPS  # enable TensorFlow ops.
 ]
 tflite_model = converter.convert()
 
