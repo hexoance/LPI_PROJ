@@ -126,4 +126,4 @@ Se continuar, aumentar o grau do alerta.
 
 - Tópicos a abordar na apresentação.
    - Problema, motivaçao, objetivos, o que fizemos, mostrar demo(1minuto)
-   - Alternativa ao openHAB: Mozilla WebThings.
+- Alternativa ao openHAB: Mozilla WebThings.
