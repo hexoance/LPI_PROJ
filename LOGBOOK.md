@@ -121,3 +121,9 @@ Se continuar, aumentar o grau do alerta.
 - Matriz de Confusão deve ser feita apenas para o _validation set_.
 - No relatório, abordar o tema da captação espacial do _array_ de microfones.
 - Documentar testes de ligação entre o openHAB e o _Brain Device_.
+
+## **27/05/2021**
+
+- Tópicos a abordar na apresentação.
+   - Problema, motivaçao, objetivos, o que fizemos, mostrar demo(1minuto)
+   - Alternativa ao openHAB: Mozilla WebThings.
