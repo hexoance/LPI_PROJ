@@ -1,14 +1,15 @@
 import argparse
 import datetime
-
-from inference.audio import AudioInference
-from inference.video import VideoInference
-from capture.audio import MicrophoneAudioStream
-from capture.video import WebcamVideoStream
 from multiprocessing import Queue, Pool
-from edge_device.const import MODEL_UNKOWN
 
 from openhab import OpenHAB
+
+from capture.audio import MicrophoneAudioStream
+from inference.audio import AudioInference
+
+# Disabled for compatibility with RPI
+#from capture.video import WebcamVideoStream
+#from inference.video import VideoInference
 
 base_url = 'http://localhost:8080/rest'
 openhab = OpenHAB(base_url)
@@ -21,7 +22,7 @@ models = {
         {'name': 'yamnet_retrained', 'duration': 0.96, 'frequency': 16000, 'model': AudioInference, 'threshold': 0.6}
     ],
     'video': [
-        {'name': 'charades', 'model': VideoInference}
+        #{'name': 'charades', 'model': VideoInference}
     ]
 }
 
@@ -47,7 +48,7 @@ def inference_worker(in_q, out_q):
     while True:
         item = in_q.get()
         prediction = local_models[item['name']].inference(item['data'])
-        if prediction != MODEL_UNKOWN:
+        if prediction != 'Unknown':
             out_q.put({'prediction': prediction, 'type': item['type'], 'timestamp': str(datetime.datetime.now())})
 
 
@@ -82,13 +83,11 @@ def main():
     inference_pool = Pool(args.num_workers, inference_worker, (data_processed_q, prediction_q))
     network_pool = Pool(2, network_worker, (prediction_q,))
 
-    video_capture = WebcamVideoStream(src=args.video_source,
-                                      width=args.width,
-                                      height=args.height,
-                                      in_q=data_captured_q)
+    # Disabled for compatibility with RPI
+    #video_capture = WebcamVideoStream(src=args.video_source, width=args.width, height=args.height, in_q=data_captured_q)
 
-    if video_capture.found:
-        video_capture.start()
+    #if video_capture.found:
+    #    video_capture.start()
 
     audio_capture = MicrophoneAudioStream(src=0, in_q=data_captured_q).start()
 
@@ -109,7 +108,7 @@ def main():
     processing_pool.terminate()
 
     audio_capture.stop()
-    video_capture.stop()
+    #video_capture.stop()
 
     print('[INFO] elapsed time (seconds): {:.2f}'.format((end - start).total_seconds()))
 

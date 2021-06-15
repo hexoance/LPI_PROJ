@@ -2,7 +2,6 @@ import numpy as np
 from tflite_runtime.interpreter import Interpreter
 from pydub import AudioSegment
 import csv
-from edge_device.const import MODEL_UNKOWN
 
 
 class AudioInference:
@@ -65,7 +64,7 @@ class AudioInference:
         inferred_class = self.class_names[top_class]
 
         if top_score < self.threshold:
-            inferred_class = MODEL_UNKOWN
+            inferred_class = 'Unknown'
 
         print(f'[AUDIO - \'{self.model_name}\'] {inferred_class} ({top_score})')
 
