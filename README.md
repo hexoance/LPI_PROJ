@@ -8,6 +8,9 @@ obtida.
 
 ## Como utilizar?
 
+### Raspberry Pi 4
+As instruções para instalar o software necessário numa RPI4 encontram-se no ficheiro [INSTALL_RPI](https://github.com/hexoance/LPI_PROJ/blob/master/INSTALL_RPI.md).
+
 ### OpenHAB3
 
 1. Fazer [Download e Instalação](https://www.openhab.org/download/) do openHAB.
